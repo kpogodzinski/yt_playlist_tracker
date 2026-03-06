@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <h2>Search for a channel</h2>
+    <form method="POST" action="/search">
+        <input type="text" name="query" placeholder="Search for the channel name"/>
+        <button type="submit">Search</button>
+    </form>
+    <br />
+    {% if channels %}
+        <hr />
+        <h2>Found channels</h2>
+        <p>Total: {{ channels | length }}</p>
+        <div class="grid">
+            {% for channel in channels %}
+                <a href="{{ url_for('search_channel', channel_id=channel.id) }}"
+                   class="card-link">
+                    <div class="card">
+                        <h4>{{ channel.title }}</h4>
+                        <img src="{{ channel.thumbnail }}"/>
+                    </div>
+                </a>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    {% if playlists == "empty" %}
+        <h2>No playlists found on this channel.</h2>
+        <button class="back-btn" onclick="history.back()">< Go back</button>
+    {% elif playlists %}
+        <hr />
+        <h2>{{ channel_name }}'s playlists</h2>
+        <p>Total: {{ playlists | length }}</p>
+        <form method="GET">
+            <label for="sort_by">Sort by:</label>
+            <select id="sort_by" name="sort_by" onchange="this.form.submit()">
+                <option value="title" {% if sort_by == "title" %}selected{% endif %}>Title</option>
+                <option value="date_created" {% if sort_by == "date_created" %}selected{% endif %}>Date created</option>
+            </select>
+        </form>
+        <button class="back-btn" onclick="history.back()">< Go back</button>
+        <div class="grid">
+            {% for playlist in playlists %}
+                <a href="{{ url_for('playlist_details', playlist_id=playlist.id) }}"
+                   class="card-link">
+                    <div class="card">
+                        <h4>{{ playlist.title }}</h4>
+                        <img src="{{ playlist.thumbnail }}"/>
+                        <button class="save-btn"
+                                data-id="{{ playlist.id }}"
+                                {% if playlist.id in saved_playlists %} disabled {% endif %}>
+                            {% if playlist.id in saved_playlists %}
+                                Saved!
+                            {% else %}
+                                Save
+                            {% endif %}
+                        </button>
+                    </div>
+                </a>
+            {% endfor %}
+        </div>
+    {% endif %}
+{% endblock %}

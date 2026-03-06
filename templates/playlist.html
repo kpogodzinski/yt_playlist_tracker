@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <h2>{{ playlist.title }}</h2>
+    <div class="progress-container">
+        <div class="progress-text">
+            {{ videos | selectattr('is_watched', 'equalto', 1) | list | length }} / {{ videos | length }} watched
+        </div>
+        <div class="progress-bar">
+            <div class="progress-fill{% if playlist.progress == 100 %} complete{% endif %}"
+                 style="width: {{ playlist.progress }}%;"></div>
+        </div>
+    </div>
+    <button class="back-btn" onclick="history.back()">< Go back</button>
+    <button class="save-btn"
+            {% if playlist.id in saved_playlists %} disabled{% endif %}
+            data-id="{{ playlist.id }}">
+        {% if playlist.id in saved_playlists %}
+            Saved!
+        {% else %}
+            Save
+        {% endif %}
+    </button>
+    <button class="watchall-btn{% if playlist.progress == 100 %} watched{% endif %}" data-playlist="{{ playlist.id }}">
+        {% if playlist.progress == 100 %}
+            Unwatch all
+        {% else %}
+            Watch all
+        {% endif %}
+    </button>
+    {% if playlist.id in saved_playlists %}
+        <button class="fetch-btn" data-playlist="{{ playlist.id }}">Refresh playlist</button>
+    {% endif %}
+    <div class="grid">
+        {% for video in videos %}
+            <div class="card">
+                <h4>{{ video.title }}</h4>
+                <img src="{{ video.thumbnail }}"/>
+                <button class="watch-btn{% if video.is_watched %} watched{% endif %}"
+                        data-video="{{ video.id }}">
+                    {% if video.is_watched %}
+                        Watched
+                    {% else %}
+                        Not watched
+                    {% endif %}
+                </button>
+            </div>
+        {% endfor %}
+    </div>
+{% endblock %}

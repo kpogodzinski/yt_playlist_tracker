@@ -1,0 +1,184 @@
+body {
+    font-family: Arial, sans-serif;
+    background: #121212;
+    color: white;
+}
+
+nav {
+    background: #1e1e1e;
+    padding: 20px 20px 30px;
+    border-radius: 6px;
+}
+
+nav a {
+    background: inherit;
+    padding: 8px 12px;
+    border-radius: 6px;
+    text-decoration: none;
+    color: white;
+    transition: background 0.2s, transform 0.2s;
+}
+
+nav a:hover {
+    background: #2e2e2e;
+    transform: translateY(-2px);
+}
+
+nav a.active {
+    background: #bcbcbc;
+    color: black;
+}
+
+form {
+    margin: 8px 0;
+}
+
+form input {
+    margin: 6px 0;
+    padding: 6px 12px;
+    width: 200px;
+}
+
+form button, form select {
+    padding: 6px 12px;
+}
+
+.container {
+    padding: 20px;
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 20px;
+    padding: 20px;
+    margin-top: 10px;
+    align-items: start;
+}
+
+.card-link {
+    text-decoration: none;
+    color: inherit;
+}
+
+.card {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    background-color: #1f1f1f;
+    min-height: 320px;
+    padding: 15px;
+    border-radius: 10px;
+    text-align: center;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+}
+
+.card img {
+    width: 100%;
+    height: auto;
+    border-radius: 8px;
+    margin-top: auto;
+    margin-bottom: 10px;
+}
+
+button, select {
+    margin-top: 10px;
+    padding: 8px 12px;
+    background-color: inherit;
+    color: #bbbbbb;
+    border: 3px solid #bbbbbb;
+    border-radius: 6px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.2s;
+}
+
+button:hover {
+    background-color: #2e2e2e;
+    transform: translateY(-2px);
+}
+
+button.save-btn {
+    background-color: inherit;
+    color: #23a500;
+    border-color: #23a500;
+}
+
+button.save-btn:hover {
+    background-color: #2e2e2e;
+    transform: translateY(-2px);
+}
+
+button.save-btn:disabled {
+    background-color: #23a500;
+    color: white;
+    cursor: not-allowed;
+}
+
+button.rm-btn {
+    background-color: inherit;
+    color: #cd0000;
+    border-color: #cd0000;
+}
+
+button.rm-btn:hover {
+    background-color: #2e2e2e;
+    transform: translateY(-2px);
+}
+
+button.rm-btn:disabled {
+    background-color: #cd0000;
+    color: white;
+    cursor: not-allowed;
+}
+
+button.watch-btn, button.watchall-btn {
+    background-color: inherit;
+    color: #304ac3;
+    border-color: #304AC3;
+}
+
+button.watch-btn:hover, button.watchall-btn:hover {
+    background-color: #2e2e2e;
+    transform: translateY(-2px);
+}
+
+button.watch-btn.watched, button.watchall-btn.watched {
+    background-color: #304ac3;
+    color: white;
+}
+
+.progress-container {
+    margin: 15px 0 15px;
+}
+
+.progress-text {
+    font-size: 14px;
+    margin-bottom: 6px;
+    color: #bbb;
+}
+
+.progress-bar {
+    width: 100%;
+    height: 10px;
+    background-color: #333;
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    background-color: goldenrod;
+    width: 0;
+    transition: width 0.3s ease;
+}
+
+.progress-fill.complete {
+    background-color: limegreen;
+}
+
+@media (max-width: 600px) {
+    .grid {
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    }
+}
