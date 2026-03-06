@@ -1,5 +1,6 @@
 import sqlite3
 import youtube_api as yt
+import os
 from werkzeug.security import generate_password_hash, check_password_hash
 
 def db_connect(database=None):
@@ -12,18 +13,43 @@ def db_connect(database=None):
 """ USERS """
 
 def register_user(username, password):
+    if not os.path.exists("databases"):
+        os.mkdir("databases")
+
     conn, cursor = db_connect("users")
     password_hash = generate_password_hash(password)
-    cursor.execute("INSERT INTO users (username, password) VALUES (?, ?)",
-                   (username, password_hash))
+
+    try:
+        cursor.execute("INSERT INTO users (username, password) VALUES (?, ?)",
+                       (username, password_hash))
+    except sqlite3.OperationalError as e:
+        if "no such table" in str(e):
+            __create_users_db__()
+            cursor.execute("INSERT INTO users (username, password) VALUES (?, ?)",
+                           (username, password_hash))
+        else:
+            raise
+
     conn.commit()
     conn.close()
 
     __create_user_tables__(username)
 
 def login_user(username, password):
+    if not os.path.exists("databases"):
+        os.mkdir("databases")
+
     conn, cursor = db_connect("users")
-    cursor.execute("SELECT * FROM users WHERE username = (?)", (username,))
+
+    try:
+        cursor.execute("SELECT * FROM users WHERE username = (?)", (username,))
+    except sqlite3.OperationalError as e:
+        if "no such table" in str(e):
+            __create_users_db__()
+            cursor.execute("SELECT * FROM users WHERE username = (?)", (username,))
+        else:
+            raise
+
     user = cursor.fetchone()
     conn.close()
 
@@ -31,6 +57,18 @@ def login_user(username, password):
         return user[0:2]
     else:
         return None
+
+def __create_users_db__():
+    conn, cursor = db_connect("users")
+    cursor.execute("""
+                    CREATE TABLE users (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        username TEXT UNIQUE NOT NULL,
+                        password TEXT NOT NULL
+                    );
+                """)
+    conn.commit()
+    conn.close()
 
 def __create_user_tables__(username):
     conn, cursor = db_connect(username)
