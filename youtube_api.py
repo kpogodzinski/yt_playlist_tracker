@@ -2,6 +2,7 @@ import requests
 import re
 from os import getenv
 from itertools import islice
+from datetime import datetime
 
 YOUTUBE_API_KEY = getenv("YOUTUBE_API_KEY")
 
@@ -149,7 +150,7 @@ def get_videos(playlist_id):
                 "title": video["snippet"]["title"],
                 "thumbnail": video["snippet"]["thumbnails"]["high"]["url"],
                 "duration": __parse_duration__(video_durations[vid]),
-                "uploaded": video["snippet"]["publishedAt"]
+                "uploaded": (datetime.fromisoformat(video["snippet"]["publishedAt"].replace("Z", "+00:00"))).strftime("%d %B %Y")
             })
         except KeyError:
             print(f"Video {video['id']} is private.")

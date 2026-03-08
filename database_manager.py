@@ -236,11 +236,27 @@ def get_playlist_videos(username, playlist_id):
     conn.close()
     return rows
 
-def insert_video(username, id, playlist_id, position, title, thumbnail, duration, uploaded):
+def insert_or_update_video(username, id, playlist_id, position, title, thumbnail, duration, uploaded):
     conn, cursor = db_connect(username)
-    cursor.execute(
-        "INSERT INTO videos (id, playlist_id, position, title, thumbnail, duration, uploaded) VALUES (?, ?, ?, ?, ?, ?, ?)",
-        (id, playlist_id, position, title, thumbnail, duration, uploaded))
+
+    try:
+        cursor.execute(
+            "INSERT INTO videos (id, playlist_id, position, title, thumbnail, duration, uploaded) VALUES (?, ?, ?, ?, ?, ?, ?)",
+            (id, playlist_id, position, title, thumbnail, duration, uploaded))
+    except sqlite3.IntegrityError:
+        cursor.execute(
+            """
+            UPDATE videos 
+            SET playlist_id = ?, 
+                position = ?, 
+                title = ?, 
+                thumbnail = ?, 
+                duration = ?, 
+                uploaded = ?
+            WHERE id = ?
+            """,
+            (playlist_id, position, title, thumbnail, duration, uploaded, id)
+        )
     conn.commit()
     conn.close()
 

@@ -2,7 +2,6 @@ from flask import *
 import sqlite3
 from dotenv import load_dotenv
 from os import getenv
-from datetime import datetime
 
 load_dotenv()
 
@@ -183,7 +182,7 @@ def playlist_details(playlist_id):
             "title": video["title"],
             "thumbnail": video["thumbnail"],
             "duration": video["duration"],
-            "uploaded": (datetime.fromisoformat(video["uploaded"].replace("Z", "+00:00"))).strftime("%d %B %Y"),
+            "uploaded": video["uploaded"],
             "is_watched": 0
         } for video in data]
 
@@ -231,14 +230,14 @@ def fetch_playlist(playlist_id):
     videos = yt.get_videos(playlist_id)
     for video in videos:
         try:
-            db.insert_video(session["username"],
-                            video["id"],
-                            video["playlist_id"],
-                            video["position"],
-                            video["title"],
-                            video["thumbnail"],
-                            video["duration"],
-                            video["uploaded"])
+            db.insert_or_update_video(session["username"],
+                                      video["id"],
+                                      video["playlist_id"],
+                                      video["position"],
+                                      video["title"],
+                                      video["thumbnail"],
+                                      video["duration"],
+                                      video["uploaded"])
         except sqlite3.IntegrityError:
             print(f"Video {video['id']} already exists.")
 
