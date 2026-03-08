@@ -102,6 +102,8 @@ def __create_user_tables__(username):
                     position INTEGER,
                     title TEXT,
                     thumbnail TEXT,
+                    duration TEXT,
+                    uploaded TEXT,
                     is_watched BOOLEAN DEFAULT 0,
                     FOREIGN KEY(playlist_id) REFERENCES playlists(id) ON DELETE CASCADE
                 );
@@ -190,12 +192,14 @@ def save_playlist(username, playlist_id, channel_id, title, thumbnail):
 
     videos = yt.get_videos(playlist_id)
     for video in videos:
-        cursor.execute("INSERT INTO videos (id, playlist_id, position, title, thumbnail) VALUES (?, ?, ?, ?, ?)",
+        cursor.execute("INSERT INTO videos (id, playlist_id, position, title, thumbnail, duration, uploaded) VALUES (?, ?, ?, ?, ?, ?, ?)",
                    (video.get("id"),
                     playlist_id,
                     video.get("position"),
                     video.get("title"),
-                    video.get("thumbnail")))
+                    video.get("thumbnail"),
+                    video.get("duration"),
+                    video.get("uploaded")))
     conn.commit()
     conn.close()
 
@@ -232,11 +236,11 @@ def get_playlist_videos(username, playlist_id):
     conn.close()
     return rows
 
-def insert_video(username, id, playlist_id, position, title, thumbnail):
+def insert_video(username, id, playlist_id, position, title, thumbnail, duration, uploaded):
     conn, cursor = db_connect(username)
     cursor.execute(
-        "INSERT INTO videos (id, playlist_id, position, title, thumbnail) VALUES (?, ?, ?, ?, ?)",
-        (id, playlist_id, position, title, thumbnail))
+        "INSERT INTO videos (id, playlist_id, position, title, thumbnail, duration, uploaded) VALUES (?, ?, ?, ?, ?, ?, ?)",
+        (id, playlist_id, position, title, thumbnail, duration, uploaded))
     conn.commit()
     conn.close()
 

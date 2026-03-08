@@ -35,7 +35,11 @@
         {% for video in videos %}
             <div class="card">
                 <h4>{{ video.title }}</h4>
-                <img src="{{ video.thumbnail }}"/>
+                <div class="thumb">
+                    <img src="{{ video.thumbnail }}"/>
+                    <p class="duration">{{ video.duration }}</p>
+                </div>
+                <p class="uploaded">Uploaded: {{ video.uploaded }}</p>
                 <button class="watch-btn{% if video.is_watched %} watched{% endif %}"
                         data-video="{{ video.id }}">
                     {% if video.is_watched %}

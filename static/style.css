@@ -94,12 +94,35 @@ form button, form select {
     box-shadow: 0 2px 5px rgba(0,0,0,0.5);
 }
 
-.card img {
+.card p {
+    color: #777777;
+    font-size: small;
+}
+
+.card p.uploaded {
+    margin: 0 0 auto 0;
+}
+
+.thumb {
+    position: relative;
+}
+
+.thumb img {
     width: 100%;
     height: auto;
     border-radius: 8px;
     margin-top: auto;
     margin-bottom: 10px;
+}
+
+.thumb .duration {
+    position: absolute;
+    bottom: 6px;
+    right: 6px;
+    padding: 3px;
+    border-radius: 6px;
+    background-color: rgba(0,0,0,0.75);
+    font-weight: bold;
 }
 
 button, select {

@@ -1,4 +1,5 @@
 import requests
+import re
 from os import getenv
 
 YOUTUBE_API_KEY = getenv("YOUTUBE_API_KEY")
@@ -70,6 +71,33 @@ def get_channel_data(channel_id):
     }
     return data
 
+def __get_video_duration__(video_id):
+    url = "https://www.googleapis.com/youtube/v3/videos/"
+    params = {
+        "part": "contentDetails",
+        "id": video_id,
+        "key": YOUTUBE_API_KEY
+    }
+    response = requests.get(url, params=params)
+    data = response.json()
+    return data["items"][0]["contentDetails"]["duration"]
+
+def __parse_duration__(duration):
+    pattern = re.compile(r"PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?")
+    match = pattern.match(duration)
+    if not match:
+        return 0, 0, 0
+
+    h, m, s = match.groups()
+    h = int(h or 0)
+    m = int(m or 0)
+    s = int(s or 0)
+
+    if h > 0:
+        return f"{h}:{m:02}:{s:02}"
+    else:
+        return f"{m:02}:{s:02}"
+
 def get_videos(playlist_id):
     videos = []
     url = "https://www.googleapis.com/youtube/v3/playlistItems"
@@ -100,7 +128,9 @@ def get_videos(playlist_id):
                 "playlist_id": playlist_id,
                 "position": video["snippet"]["position"],
                 "title": video["snippet"]["title"],
-                "thumbnail": video["snippet"]["thumbnails"]["high"]["url"]
+                "thumbnail": video["snippet"]["thumbnails"]["high"]["url"],
+                "duration": __parse_duration__(__get_video_duration__(video["snippet"]["resourceId"]["videoId"])),
+                "uploaded": video["snippet"]["publishedAt"]
             })
         except KeyError:
             print(f"Video {video['id']} is private.")

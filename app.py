@@ -2,6 +2,7 @@ from flask import *
 import sqlite3
 from dotenv import load_dotenv
 from os import getenv
+from datetime import datetime
 
 load_dotenv()
 
@@ -181,6 +182,8 @@ def playlist_details(playlist_id):
             "position": video["position"],
             "title": video["title"],
             "thumbnail": video["thumbnail"],
+            "duration": video["duration"],
+            "uploaded": (datetime.fromisoformat(video["uploaded"].replace("Z", "+00:00"))).strftime("%d %B %Y"),
             "is_watched": 0
         } for video in data]
 
@@ -233,7 +236,9 @@ def fetch_playlist(playlist_id):
                             video["playlist_id"],
                             video["position"],
                             video["title"],
-                            video["thumbnail"])
+                            video["thumbnail"],
+                            video["duration"],
+                            video["uploaded"])
         except sqlite3.IntegrityError:
             print(f"Video {video['id']} already exists.")
 
