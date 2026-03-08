@@ -1,6 +1,7 @@
 import requests
 import re
 from os import getenv
+from itertools import islice
 
 YOUTUBE_API_KEY = getenv("YOUTUBE_API_KEY")
 
@@ -71,16 +72,21 @@ def get_channel_data(channel_id):
     }
     return data
 
-def __get_video_duration__(video_id):
+def __get_videos_durations__(ids):
     url = "https://www.googleapis.com/youtube/v3/videos/"
     params = {
         "part": "contentDetails",
-        "id": video_id,
+        "id": ids,
         "key": YOUTUBE_API_KEY
     }
     response = requests.get(url, params=params)
     data = response.json()
-    return data["items"][0]["contentDetails"]["duration"]
+
+    video_durations = {}
+    for item in data["items"]:
+        video_durations[item["id"]] = item["contentDetails"]["duration"]
+
+    return video_durations
 
 def __parse_duration__(duration):
     pattern = re.compile(r"PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?")
@@ -97,6 +103,12 @@ def __parse_duration__(duration):
         return f"{h}:{m:02}:{s:02}"
     else:
         return f"{m:02}:{s:02}"
+
+def __batch__(iterable, n=50):
+    it = iter(iterable)
+    while __batch__ := list(islice(it, n)):
+        yield __batch__
+
 
 def get_videos(playlist_id):
     videos = []
@@ -120,16 +132,23 @@ def get_videos(playlist_id):
         if not page_token:
             break
 
+    video_ids = [v["snippet"]["resourceId"]["videoId"] for v in videos]
+    video_durations = {}
+    for batch_ids in __batch__(video_ids, 50):
+        ids = ",".join(batch_ids)
+        video_durations.update(__get_videos_durations__(ids))
+
     data = []
     for video in videos:
         try:
+            vid = video["snippet"]["resourceId"]["videoId"]
             data.append({
                 "id": video["id"],
                 "playlist_id": playlist_id,
                 "position": video["snippet"]["position"],
                 "title": video["snippet"]["title"],
                 "thumbnail": video["snippet"]["thumbnails"]["high"]["url"],
-                "duration": __parse_duration__(__get_video_duration__(video["snippet"]["resourceId"]["videoId"])),
+                "duration": __parse_duration__(video_durations[vid]),
                 "uploaded": video["snippet"]["publishedAt"]
             })
         except KeyError:
