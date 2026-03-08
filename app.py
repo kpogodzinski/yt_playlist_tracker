@@ -228,18 +228,7 @@ def watch_all(playlist_id):
 @app.route("/fetch_playlist/<playlist_id>", methods=["POST"])
 def fetch_playlist(playlist_id):
     videos = yt.get_videos(playlist_id)
-    for video in videos:
-        try:
-            db.insert_or_update_video(session["username"],
-                                      video["id"],
-                                      video["playlist_id"],
-                                      video["position"],
-                                      video["title"],
-                                      video["thumbnail"],
-                                      video["duration"],
-                                      video["uploaded"])
-        except sqlite3.IntegrityError:
-            print(f"Video {video['id']} already exists.")
+    db.insert_or_update_videos(session["username"], videos)
 
     return jsonify({"status": "success"})
 

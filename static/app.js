@@ -137,18 +137,15 @@ document.querySelectorAll(".fetchall-btn").forEach(button => {
         button.textContent = "Refreshing..."
 
         let done = 0
-        const requests = playlists.map(id =>
-            fetch(`/fetch_playlist/${id}`, { method: "POST" })
-            .then(response => response.json())
-            .then(data => {
-                if (data.status === "success") {
+        for (const id of playlists) {
+            const response = await fetch(`/fetch_playlist/${id}`, { method: "POST" })
+            const data = await response.json()
+            if (data.status === "success") {
                     done += 1
                     button.textContent = `Refreshing... (${done}/${total})`
                 }
-            })
-        )
+        }
 
-        await Promise.all(requests)
         button.textContent = "Refreshed!"
         button.disabled = false
     })

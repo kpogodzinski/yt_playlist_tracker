@@ -143,7 +143,7 @@ def __create_user_tables__(username):
     cursor.execute("""
                         CREATE TRIGGER last_watched_tracker
                         AFTER UPDATE ON videos
-                        WHEN NEW.is_watched = 1
+                        WHEN NEW.is_watched = 1 AND OLD.is_watched = 0
                         BEGIN
                             UPDATE playlists
                             SET last_watched = current_timestamp
@@ -236,27 +236,32 @@ def get_playlist_videos(username, playlist_id):
     conn.close()
     return rows
 
-def insert_or_update_video(username, id, playlist_id, position, title, thumbnail, duration, uploaded):
+def insert_or_update_videos(username, videos):
     conn, cursor = db_connect(username)
 
-    try:
-        cursor.execute(
-            "INSERT INTO videos (id, playlist_id, position, title, thumbnail, duration, uploaded) VALUES (?, ?, ?, ?, ?, ?, ?)",
-            (id, playlist_id, position, title, thumbnail, duration, uploaded))
-    except sqlite3.IntegrityError:
-        cursor.execute(
-            """
-            UPDATE videos 
-            SET playlist_id = ?, 
-                position = ?, 
-                title = ?, 
-                thumbnail = ?, 
-                duration = ?, 
-                uploaded = ?
-            WHERE id = ?
-            """,
-            (playlist_id, position, title, thumbnail, duration, uploaded, id)
-        )
+    for video in videos:
+        try:
+            cursor.execute(
+                "INSERT INTO videos (id, playlist_id, position, title, thumbnail, duration, uploaded) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                (video["id"], video["playlist_id"], video["position"],
+                 video["title"], video["thumbnail"], video["duration"], video["uploaded"])
+            )
+        except sqlite3.IntegrityError:
+            print(f"Video {video['id']} already exists. Updating metadata.")
+            cursor.execute(
+                """
+                UPDATE videos 
+                SET playlist_id = ?, 
+                    position = ?, 
+                    title = ?, 
+                    thumbnail = ?, 
+                    duration = ?, 
+                    uploaded = ?
+                WHERE id = ?
+                """,
+                (video["playlist_id"], video["position"], video["title"],
+                 video["thumbnail"], video["duration"], video["uploaded"], video["id"])
+            )
     conn.commit()
     conn.close()
 
