@@ -103,6 +103,10 @@ form button, form select {
     margin: 0 0 auto 0;
 }
 
+.hidden {
+    display: none !important;
+}
+
 .thumb {
     position: relative;
 }
@@ -190,6 +194,52 @@ button.watch-btn:hover, button.watchall-btn:hover {
 button.watch-btn.watched, button.watchall-btn.watched {
     background-color: #304ac3;
     color: white;
+}
+
+.toggle-switch {
+    margin: 10px;
+    display: inline-flex;
+    align-items: center;
+    vertical-align: middle;
+    cursor: pointer;
+    user-select: none;
+    font-family: sans-serif;
+    font-size: small;
+    gap: 0.5rem;
+}
+
+.toggle-switch input {
+    display: none;
+}
+
+.toggle-switch .slider {
+    position: relative;
+    width: 52px;
+    height: 26px;
+    background-color: inherit;
+    border-radius: 10px;
+    border: 3px solid #bbbbbb;
+    transition: background-color 0.3s;
+}
+
+.toggle-switch .slider::before {
+    content: "";
+    position: absolute;
+    height: 20px;
+    width: 20px;
+    left: 3px;
+    top: 3px;
+    background-color: #bbbbbb;
+    border-radius: 6px;
+    transition: transform 0.3s;
+}
+
+.toggle-switch input:checked + .slider {
+    background-color: #23a500;
+}
+
+.toggle-switch input:checked + .slider::before {
+    transform: translateX(26px);
 }
 
 .progress-container {

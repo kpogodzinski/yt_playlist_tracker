@@ -29,6 +29,11 @@
         <br />
         <button class="back-btn" onclick="history.back()">< Go back</button>
         <button class="fetchall-btn" data-playlists="{{ playlists | map(attribute='id') | list | join(',') }}">Refresh all</button>
+        <label class="toggle-switch">
+          <input type="checkbox" id="hide-completed-toggle">
+          <span class="slider"></span>
+          Hide completed playlists
+        </label>
         <div class="grid">
             {% for playlist in playlists %}
                 <a href="{{ url_for('playlist_details', playlist_id=playlist.id) }}" class="card-link">

@@ -159,3 +159,25 @@ document.querySelectorAll('a').forEach(a => {
     }
   });
 });
+
+document.addEventListener("DOMContentLoaded", () => {
+    const toggle = document.getElementById("hide-completed-toggle");
+
+    toggle.addEventListener("change", () => {
+        const cards = document.querySelectorAll(".card-link");
+
+        cards.forEach(card => {
+            const progressFill = card.querySelector(".progress-fill");
+            if (!progressFill) return;
+
+            const progress = parseInt(progressFill.style.width);
+            if (progress === 100) {
+                if (toggle.checked) {
+                    card.classList.add("hidden");
+                } else {
+                    card.classList.remove("hidden");
+                }
+            }
+        });
+    });
+});
