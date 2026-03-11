@@ -124,3 +124,19 @@ _If the server is running on another machine:_
 ```
 http://<ip_address>:5000/
 ```
+
+## Updating
+
+> :warning: **IMPORTANT: Always make a backup of your databases! There shouldn't be any problems, but I am not responsible for any data loss.**
+
+**Step 0:** Make sure the app isn't running (even in the background). If it is, you have to kill its process.
+
+**Step 1a:** Use the `git pull` command in the app directory if you have cloned this repository.
+
+**Step 1b:** Alternatively, you can download the contents of this repo and place them in the app directory. Make sure to replace all the existing files if prompted.
+
+**Step 2:** Make sure you have activated Python's virtual environment. Then, run the migrations by executing the `run_migrations.py` script. **This is a mandatory step** to ensure your database is compatible with the latest schema.
+
+**Step 3:** If the script completes with no errors, your databases are up to date. You can start the server now.
+
+> :warning: **IMPORTANT: Always make a backup of your databases! There shouldn't be any problems, but I am not responsible for any data loss.**
