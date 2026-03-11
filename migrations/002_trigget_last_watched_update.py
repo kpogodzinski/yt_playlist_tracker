@@ -13,7 +13,7 @@ def run():
             print(f"Dropped old 'last_watched_tracker' trigger in {file}")
 
             cursor.execute("""
-                CREATE TRIGGER last_watched_tracker
+                CREATE TRIGGER IF NOT EXISTS last_watched_tracker
                 AFTER UPDATE ON videos
                 WHEN NEW.is_watched = 1 AND OLD.is_watched = 0
                 BEGIN

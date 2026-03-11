@@ -9,5 +9,5 @@ for file in sorted(os.listdir(MIGRATION_DIR)):
         spec = importlib.util.spec_from_file_location("migration", path)
         module = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(module)
-        print(f"Running migration: {file}")
+        print(f"-- Running migration: {file}")
         module.run()
