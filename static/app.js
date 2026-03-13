@@ -161,23 +161,26 @@ document.querySelectorAll('a').forEach(a => {
 });
 
 document.addEventListener("DOMContentLoaded", () => {
-    const toggle = document.getElementById("hide-completed-toggle");
+    const toggle = document.getElementById("hide-toggle");
+    if (!toggle) return;
 
     toggle.addEventListener("change", () => {
-        const cards = document.querySelectorAll(".card-link");
+        let cards = document.querySelectorAll(".card-link");
+        if (cards.length === 0)
+            cards = document.querySelectorAll(".card")
 
         cards.forEach(card => {
-            const progressFill = card.querySelector(".progress-fill");
-            if (!progressFill) return;
-
-            const progress = parseInt(progressFill.style.width);
-            if (progress === 100) {
-                if (toggle.checked) {
-                    card.classList.add("hidden");
-                } else {
-                    card.classList.remove("hidden");
-                }
+            if (isCompleted(card)) {
+                card.classList.toggle("hidden", toggle.checked);
             }
         });
     });
 });
+
+function isCompleted(card) {
+    return (
+        card.querySelector(".progress-fill")?.style.width === "100%" ||
+        card.querySelector(".save-btn")?.disabled ||
+        card.querySelector(".watch-btn")?.classList.contains("watched")
+    );
+}
