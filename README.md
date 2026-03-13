@@ -13,6 +13,7 @@ The application uses the YouTube Data API to fetch channels, playlists and video
 - Browse and save playlists from channels
 - Refresh playlists to update their content
 - Sort saved playlists by title, progress, date saved, or last watched
+- Hide completed playlists and watched videos
 - Track progress of watched videos within playlists
 - Mark videos as watched or not watched
   
