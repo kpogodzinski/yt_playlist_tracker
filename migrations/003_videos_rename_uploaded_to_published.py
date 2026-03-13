@@ -13,14 +13,9 @@ def run():
             conn = sqlite3.connect(os.path.join(DB_DIR, file))
             cursor = conn.cursor()
 
-            if not column_exists(cursor, "videos", "duration"):
-                cursor.execute("ALTER TABLE videos ADD COLUMN duration TEXT")
-                print(f"Added 'duration' column to videos in {file}")
-
-            if (not column_exists(cursor, "videos", "uploaded")
-                and not column_exists(cursor, "videos", "published")):
-                cursor.execute("ALTER TABLE videos ADD COLUMN uploaded TEXT")
-                print(f"Added 'uploaded' column to videos in {file}")
+            if column_exists(cursor, "videos", "uploaded"):
+                cursor.execute("ALTER TABLE videos RENAME COLUMN uploaded TO published")
+                print(f"Renamed 'uploaded' column to 'published' in {file}")
 
             conn.commit()
             conn.close()

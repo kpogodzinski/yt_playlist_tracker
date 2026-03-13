@@ -11,3 +11,4 @@ for file in sorted(os.listdir(MIGRATION_DIR)):
         spec.loader.exec_module(module)
         print(f"-- Running migration: {file}")
         module.run()
+        print()

@@ -103,7 +103,7 @@ def __create_user_tables__(username):
                     title TEXT,
                     thumbnail TEXT,
                     duration TEXT,
-                    uploaded TEXT,
+                    published TEXT,
                     is_watched BOOLEAN DEFAULT 0,
                     FOREIGN KEY(playlist_id) REFERENCES playlists(id) ON DELETE CASCADE
                 );
@@ -192,14 +192,14 @@ def save_playlist(username, playlist_id, channel_id, title, thumbnail):
 
     videos = yt.get_videos(playlist_id)
     for video in videos:
-        cursor.execute("INSERT INTO videos (id, playlist_id, position, title, thumbnail, duration, uploaded) VALUES (?, ?, ?, ?, ?, ?, ?)",
+        cursor.execute("INSERT INTO videos (id, playlist_id, position, title, thumbnail, duration, published) VALUES (?, ?, ?, ?, ?, ?, ?)",
                    (video.get("id"),
                     playlist_id,
                     video.get("position"),
                     video.get("title"),
                     video.get("thumbnail"),
                     video.get("duration"),
-                    video.get("uploaded")))
+                    video.get("published")))
     conn.commit()
     conn.close()
 
@@ -242,9 +242,9 @@ def insert_or_update_videos(username, videos):
     for video in videos:
         try:
             cursor.execute(
-                "INSERT INTO videos (id, playlist_id, position, title, thumbnail, duration, uploaded) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                "INSERT INTO videos (id, playlist_id, position, title, thumbnail, duration, published) VALUES (?, ?, ?, ?, ?, ?, ?)",
                 (video["id"], video["playlist_id"], video["position"],
-                 video["title"], video["thumbnail"], video["duration"], video["uploaded"])
+                 video["title"], video["thumbnail"], video["duration"], video["published"])
             )
         except sqlite3.IntegrityError:
             print(f"Video {video['id']} already exists. Updating metadata.")
@@ -256,11 +256,11 @@ def insert_or_update_videos(username, videos):
                     title = ?, 
                     thumbnail = ?, 
                     duration = ?, 
-                    uploaded = ?
+                    published = ?
                 WHERE id = ?
                 """,
                 (video["playlist_id"], video["position"], video["title"],
-                 video["thumbnail"], video["duration"], video["uploaded"], video["id"])
+                 video["thumbnail"], video["duration"], video["published"], video["id"])
             )
     conn.commit()
     conn.close()

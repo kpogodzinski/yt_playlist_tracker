@@ -73,10 +73,10 @@ def get_channel_data(channel_id):
     }
     return data
 
-def __get_videos_durations__(ids):
+def __get_videos_durations_and_dates__(ids):
     url = "https://www.googleapis.com/youtube/v3/videos/"
     params = {
-        "part": "contentDetails",
+        "part": "snippet,contentDetails",
         "id": ids,
         "key": YOUTUBE_API_KEY
     }
@@ -84,10 +84,12 @@ def __get_videos_durations__(ids):
     data = response.json()
 
     video_durations = {}
+    video_dates = {}
     for item in data["items"]:
         video_durations[item["id"]] = item["contentDetails"]["duration"]
+        video_dates[item["id"]] = item["snippet"]["publishedAt"]
 
-    return video_durations
+    return video_durations, video_dates
 
 def __parse_duration__(duration):
     pattern = re.compile(r"PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?")
@@ -109,7 +111,6 @@ def __batch__(iterable, n=50):
     it = iter(iterable)
     while __batch__ := list(islice(it, n)):
         yield __batch__
-
 
 def get_videos(playlist_id):
     videos = []
@@ -135,9 +136,12 @@ def get_videos(playlist_id):
 
     video_ids = [v["snippet"]["resourceId"]["videoId"] for v in videos]
     video_durations = {}
+    video_dates = {}
     for batch_ids in __batch__(video_ids, 50):
         ids = ",".join(batch_ids)
-        video_durations.update(__get_videos_durations__(ids))
+        dur, dat = __get_videos_durations_and_dates__(ids)
+        video_durations.update(dur)
+        video_dates.update(dat)
 
     data = []
     for video in videos:
@@ -150,7 +154,7 @@ def get_videos(playlist_id):
                 "title": video["snippet"]["title"],
                 "thumbnail": video["snippet"]["thumbnails"]["high"]["url"],
                 "duration": __parse_duration__(video_durations[vid]),
-                "uploaded": (datetime.fromisoformat(video["snippet"]["publishedAt"].replace("Z", "+00:00"))).strftime("%d %B %Y")
+                "published": (datetime.fromisoformat(video_dates[vid].replace("Z", "+00:00"))).strftime("%d %B %Y")
             })
         except KeyError:
             print(f"Video {video['id']} is private.")

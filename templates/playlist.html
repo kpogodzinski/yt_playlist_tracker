@@ -44,7 +44,7 @@
                     <img src="{{ video.thumbnail }}"/>
                     <p class="duration">{{ video.duration }}</p>
                 </div>
-                <p class="uploaded">Uploaded: {{ video.uploaded }}</p>
+                <p class="published">Published: {{ video.published }}</p>
                 <button class="watch-btn{% if video.is_watched %} watched{% endif %}"
                         data-video="{{ video.id }}">
                     {% if video.is_watched %}

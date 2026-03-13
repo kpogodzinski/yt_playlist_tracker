@@ -182,7 +182,7 @@ def playlist_details(playlist_id):
             "title": video["title"],
             "thumbnail": video["thumbnail"],
             "duration": video["duration"],
-            "uploaded": video["uploaded"],
+            "published": video["published"],
             "is_watched": 0
         } for video in data]
 
