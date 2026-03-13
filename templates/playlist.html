@@ -31,11 +31,20 @@
     {% if playlist.id in saved_playlists %}
         <button class="fetch-btn" data-playlist="{{ playlist.id }}">Refresh playlist</button>
     {% endif %}
+    <label class="toggle-switch">
+      <input type="checkbox" id="hide-toggle">
+      <span class="slider"></span>
+      Hide watched videos
+    </label>
     <div class="grid">
         {% for video in videos %}
             <div class="card">
                 <h4>{{ video.title }}</h4>
-                <img src="{{ video.thumbnail }}"/>
+                <div class="thumb">
+                    <img src="{{ video.thumbnail }}"/>
+                    <p class="duration">{{ video.duration }}</p>
+                </div>
+                <p class="uploaded">Uploaded: {{ video.uploaded }}</p>
                 <button class="watch-btn{% if video.is_watched %} watched{% endif %}"
                         data-video="{{ video.id }}">
                     {% if video.is_watched %}

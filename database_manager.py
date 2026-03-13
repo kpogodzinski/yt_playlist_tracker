@@ -102,6 +102,8 @@ def __create_user_tables__(username):
                     position INTEGER,
                     title TEXT,
                     thumbnail TEXT,
+                    duration TEXT,
+                    uploaded TEXT,
                     is_watched BOOLEAN DEFAULT 0,
                     FOREIGN KEY(playlist_id) REFERENCES playlists(id) ON DELETE CASCADE
                 );
@@ -141,7 +143,7 @@ def __create_user_tables__(username):
     cursor.execute("""
                         CREATE TRIGGER last_watched_tracker
                         AFTER UPDATE ON videos
-                        WHEN NEW.is_watched = 1
+                        WHEN NEW.is_watched = 1 AND OLD.is_watched = 0
                         BEGIN
                             UPDATE playlists
                             SET last_watched = current_timestamp
@@ -190,12 +192,14 @@ def save_playlist(username, playlist_id, channel_id, title, thumbnail):
 
     videos = yt.get_videos(playlist_id)
     for video in videos:
-        cursor.execute("INSERT INTO videos (id, playlist_id, position, title, thumbnail) VALUES (?, ?, ?, ?, ?)",
+        cursor.execute("INSERT INTO videos (id, playlist_id, position, title, thumbnail, duration, uploaded) VALUES (?, ?, ?, ?, ?, ?, ?)",
                    (video.get("id"),
                     playlist_id,
                     video.get("position"),
                     video.get("title"),
-                    video.get("thumbnail")))
+                    video.get("thumbnail"),
+                    video.get("duration"),
+                    video.get("uploaded")))
     conn.commit()
     conn.close()
 
@@ -232,11 +236,32 @@ def get_playlist_videos(username, playlist_id):
     conn.close()
     return rows
 
-def insert_video(username, id, playlist_id, position, title, thumbnail):
+def insert_or_update_videos(username, videos):
     conn, cursor = db_connect(username)
-    cursor.execute(
-        "INSERT INTO videos (id, playlist_id, position, title, thumbnail) VALUES (?, ?, ?, ?, ?)",
-        (id, playlist_id, position, title, thumbnail))
+
+    for video in videos:
+        try:
+            cursor.execute(
+                "INSERT INTO videos (id, playlist_id, position, title, thumbnail, duration, uploaded) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                (video["id"], video["playlist_id"], video["position"],
+                 video["title"], video["thumbnail"], video["duration"], video["uploaded"])
+            )
+        except sqlite3.IntegrityError:
+            print(f"Video {video['id']} already exists. Updating metadata.")
+            cursor.execute(
+                """
+                UPDATE videos 
+                SET playlist_id = ?, 
+                    position = ?, 
+                    title = ?, 
+                    thumbnail = ?, 
+                    duration = ?, 
+                    uploaded = ?
+                WHERE id = ?
+                """,
+                (video["playlist_id"], video["position"], video["title"],
+                 video["thumbnail"], video["duration"], video["uploaded"], video["id"])
+            )
     conn.commit()
     conn.close()
 

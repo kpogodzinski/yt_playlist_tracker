@@ -21,7 +21,7 @@
             <label for="sort_by">Sort by:</label>
             <select id="sort_by" name="sort_by" onchange="this.form.submit()">
                 <option value="date_saved" {% if sort_by == "date_saved" %}selected{% endif %}>Date saved</option>
-                <option value="date_watched" {% if sort_by == "date_watched" %}selected{% endif %}>Date watched</option>
+                <option value="date_watched" {% if sort_by == "date_watched" %}selected{% endif %}>Last watched</option>
                 <option value="title" {% if sort_by == "title" %}selected{% endif %}>Title</option>
                 <option value="progress" {% if sort_by == "progress" %}selected{% endif %}>Progress</option>
             </select>
@@ -29,6 +29,11 @@
         <br />
         <button class="back-btn" onclick="history.back()">< Go back</button>
         <button class="fetchall-btn" data-playlists="{{ playlists | map(attribute='id') | list | join(',') }}">Refresh all</button>
+        <label class="toggle-switch">
+          <input type="checkbox" id="hide-toggle">
+          <span class="slider"></span>
+          Hide completed playlists
+        </label>
         <div class="grid">
             {% for playlist in playlists %}
                 <a href="{{ url_for('playlist_details', playlist_id=playlist.id) }}" class="card-link">

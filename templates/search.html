@@ -39,6 +39,11 @@
             </select>
         </form>
         <button class="back-btn" onclick="history.back()">< Go back</button>
+        <label class="toggle-switch">
+          <input type="checkbox" id="hide-toggle">
+          <span class="slider"></span>
+          Hide saved playlists
+        </label>
         <div class="grid">
             {% for playlist in playlists %}
                 <a href="{{ url_for('playlist_details', playlist_id=playlist.id) }}"

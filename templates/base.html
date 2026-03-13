@@ -14,13 +14,18 @@
             ("Search", "/search"),
         ] %}
         <nav>
-            <h1>YT Playlist Tracker</h1>
-            {% if path not in ["/login", "/register"] %}
-                {% for name, href in nav_links %}
-                    <a href="{{ href }}" class="{% if path == href %}active{% endif %}">{{ name }}</a>
-                {% endfor %}
-                <a href="/logout">Log out</a>
-            {% endif %}
+            <div class="header">
+                <img src="{{ url_for('static', filename='images/icon-512.png') }}" />
+                <h1>YT Playlist Tracker</h1>
+            </div>
+            <div class="links">
+                {% if path not in ["/login", "/register"] %}
+                    {% for name, href in nav_links %}
+                        <a href="{{ href }}" class="{% if path == href %}active{% endif %}">{{ name }}</a>
+                    {% endfor %}
+                    <a href="/logout">Log out</a>
+                {% endif %}
+            </div>
         </nav>
 
         <div class="container">
