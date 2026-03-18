@@ -79,6 +79,9 @@ document.querySelectorAll(".watch-btn").forEach(button => {
 
 document.querySelectorAll(".watchall-btn").forEach(button => {
     button.addEventListener("click", () => {
+        const confirmed = confirm("Are you sure to watch/unwatch the entire playlist?");
+        if (!confirmed) return;
+
         const playlistId = button.dataset.playlist
 
         button.textContent = "Please wait..."
@@ -151,8 +154,8 @@ document.querySelectorAll(".fetchall-btn").forEach(button => {
     })
 });
 
-document.querySelectorAll('a').forEach(a => {
-  a.addEventListener('click', e => {
+document.querySelectorAll("a").forEach(a => {
+  a.addEventListener("click", e => {
     if (window.navigator.standalone && a.hostname === location.hostname) {
       e.preventDefault();
       window.location.href = a.href;
