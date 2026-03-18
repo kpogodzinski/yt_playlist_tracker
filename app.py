@@ -23,12 +23,15 @@ def register():
         password_repeated = request.form["password_repeated"]
 
         if password != password_repeated:
-            return "Passwords don't match", 403
+            flash("Passwords don't match!", "error")
+            return redirect(url_for("register"))
         try:
             db.register_user(username, password)
         except sqlite3.IntegrityError:
-            return "Username already exists.", 403
+            flash("This username already exists!", "error")
+            return redirect(url_for("register"))
 
+        flash("Account created successfully!", "success")
         return redirect(url_for("login"))
 
     else:
@@ -46,7 +49,8 @@ def login():
             session["username"] = user[1]
             return redirect(url_for("home"))
         else:
-            return "Invalid login or password."
+            flash("Invalid username or password!", "error")
+            return redirect(url_for("login"))
 
     return render_template("login.html")
 

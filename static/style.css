@@ -64,6 +64,23 @@ form button, form select {
     padding: 6px 12px;
 }
 
+.alert {
+    margin: 5px 0;
+    font-weight: bold;
+}
+
+.alert-error {
+    color: #cd0000;
+}
+
+.alert-warning {
+    color: goldenrod;
+}
+
+.alert-success {
+    color: #23a500;
+}
+
 .container {
     padding: 20px;
 }
