@@ -40,8 +40,10 @@ def register():
         flash("Account created successfully!", "success")
         return redirect(url_for("login"))
 
-    else:
-        return render_template("register.html")
+    elif "user_id" in session:
+        return redirect(url_for("home"))
+
+    return render_template("register.html")
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
@@ -57,6 +59,9 @@ def login():
         else:
             flash("Invalid username or password!", "error")
             return redirect(url_for("login"))
+
+    elif "user_id" in session:
+        return redirect(url_for("home"))
 
     return render_template("login.html")
 
