@@ -88,7 +88,7 @@ def __create_user_tables__(username):
                     title TEXT,
                     thumbnail TEXT,
                     date_saved TEXT DEFAULT current_timestamp,
-                    last_watched TEXT DEFAULT current_timestamp,
+                    last_watched TEXT DEFAULT "1970-01-01",
                     progress INTEGER DEFAULT 0,
                     FOREIGN KEY(channel_id) REFERENCES channels(id) ON DELETE RESTRICT
                 );
