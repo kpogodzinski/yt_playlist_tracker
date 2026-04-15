@@ -2,6 +2,7 @@ from flask import *
 import sqlite3
 from dotenv import load_dotenv
 from os import getenv
+from datetime import timedelta
 
 load_dotenv()
 
@@ -10,6 +11,11 @@ import youtube_api as yt
 
 app = Flask(__name__)
 app.secret_key = getenv('SECRET_KEY')
+
+@app.before_request
+def permanent_session():
+    session.permanent = True
+    app.permanent_session_lifetime = timedelta(minutes=60)
 
 @app.context_processor
 def inject_current_path():
