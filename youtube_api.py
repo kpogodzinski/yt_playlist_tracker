@@ -160,20 +160,22 @@ def get_videos(playlist_id):
             print(f"Video {video['id']} is private.")
     return data
 
-def search_channels(query):
+def search_channels(query, limit, page_token=None):
     channels = []
     url = "https://www.googleapis.com/youtube/v3/search"
     params = {
         "part": "snippet",
         "q": query,
         "type": "channel",
-        "maxResults": 50,
-        "key": YOUTUBE_API_KEY
+        "maxResults": limit,
+        "pageToken": page_token,
+        "key": YOUTUBE_API_KEY,
     }
 
     response = requests.get(url, params=params)
     data = response.json()
     channels.extend(data.get("items", []))
+    tokens = [data.get("prevPageToken"), data.get("nextPageToken")]
 
     data = []
     for channel in channels:
@@ -186,4 +188,4 @@ def search_channels(query):
         except KeyError:
             print(f"Channel {channel['id']} could not be loaded.")
 
-    return data
+    return data, tokens

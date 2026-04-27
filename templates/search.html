@@ -3,14 +3,37 @@
 {% block content %}
     <h2>Search for a channel</h2>
     <form method="POST" action="/search">
-        <input type="text" name="query" placeholder="Search for the channel name"/>
+        <input type="text" name="query" placeholder="Enter a channel name" value="{{ query }}"/>
         <button type="submit">Search</button>
+        <br />
+        <label for="limit">Results per page:</label>
+        <select id="limit" name="limit" onchange="this.form.submit()">
+            <option value="10" {% if limit == 10 %}selected{% endif %}>10</option>
+            <option value="20" {% if limit == 20 %}selected{% endif %}>20</option>
+            <option value="30" {% if limit == 30 %}selected{% endif %}>30</option>
+            <option value="40" {% if limit == 40 %}selected{% endif %}>40</option>
+            <option value="50" {% if limit == 50 %}selected{% endif %}>50</option>
+        </select>
     </form>
     <br />
     {% if channels %}
         <hr />
         <h2>Found channels</h2>
         <p>Total: {{ channels | length }}</p>
+        <form method="POST" action="/search">
+            {% if prevToken %}
+                <button type="submit" name="token" value="{{ prevToken }}">
+                    &lt; Previous page
+                </button>
+            {% endif %}
+            {% if nextToken %}
+                <button type="submit" name="token" value="{{ nextToken }}">
+                    Next page &gt;
+                </button>
+            {% endif %}
+            <input type="hidden" name="query" value="{{ query }}" />
+            <input type="hidden" name="limit" value="{{ limit }}" />
+        </form>
         <div class="grid">
             {% for channel in channels %}
                 <a href="{{ url_for('search_channel', channel_id=channel.id) }}"

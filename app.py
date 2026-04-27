@@ -105,13 +105,23 @@ def search():
     if "user_id" not in session:
         return redirect(url_for("login"))
 
+    query = ""
+    limit = 10
     channels = []
+    tokens = [None, None]
 
     if request.method == "POST":
+        limit = int(request.form.get("limit"))
         query = request.form.get("query")
-        channels = yt.search_channels(query)
+        token = request.form.get("token")
+        channels, tokens = yt.search_channels(query, limit, token)
 
-    return render_template("search.html", channels=channels)
+    return render_template("search.html",
+                           channels=channels,
+                           query=query,
+                           limit=limit,
+                           prevToken=tokens[0],
+                           nextToken=tokens[1])
 
 @app.route("/search/<channel_id>")
 def search_channel(channel_id):
