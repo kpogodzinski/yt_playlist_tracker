@@ -22,11 +22,15 @@ def register_user(username, password):
     try:
         cursor.execute("INSERT INTO users (username, password) VALUES (?, ?)",
                        (username, password_hash))
+        cursor.execute("INSERT INTO preferences (user_id) SELECT id FROM users WHERE username = ?",
+                       (username,))
     except sqlite3.OperationalError as e:
         if "no such table" in str(e):
             __create_users_db__()
             cursor.execute("INSERT INTO users (username, password) VALUES (?, ?)",
                            (username, password_hash))
+            cursor.execute("INSERT INTO preferences (user_id) SELECT id FROM users WHERE username = ?",
+                           (username,))
         else:
             raise
 
@@ -65,6 +69,26 @@ def __create_users_db__():
                         id INTEGER PRIMARY KEY AUTOINCREMENT,
                         username TEXT UNIQUE NOT NULL,
                         password TEXT NOT NULL
+                    );
+                """)
+
+    cursor.execute("""
+                    CREATE TABLE preferences (
+                        user_id INTEGER PRIMARY KEY,
+                        playlists_sort_by TEXT NOT NULL DEFAULT 'date_saved',
+                        playlists_hide_completed INTEGER NOT NULL DEFAULT 0,
+                        videos_hide_watched INTEGER NOT NULL DEFAULT 0,
+                        search_results_per_page INTEGER NOT NULL DEFAULT 10,
+                        search_playlists_sort_by TEXT NOT NULL DEFAULT 'date_created',
+                        search_playlists_hide_saved INTEGER NOT NULL DEFAULT 0,
+                        FOREIGN KEY(user_id) REFERENCES users(id),
+                        
+                        CHECK(playlists_sort_by IN ('date_saved', 'last_watched', 'title', 'progress')),
+                        CHECK(playlists_hide_completed IN (0,1)),
+                        CHECK(videos_hide_watched IN (0,1)),
+                        CHECK(search_results_per_page IN (10, 20, 30, 40, 50)),
+                        CHECK(search_playlists_sort_by IN ('date_created', 'title')),
+                        CHECK(search_playlists_hide_saved IN (0,1))
                     );
                 """)
     conn.commit()
