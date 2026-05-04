@@ -62,6 +62,22 @@ def login_user(username, password):
     else:
         return None
 
+def get_preferences(user_id):
+    conn, cursor = db_connect("users")
+    row = cursor.execute("SELECT * FROM preferences WHERE user_id = (?)", (user_id,)).fetchone()
+    conn.close()
+    return row
+
+def set_preference(user_id, preference, value):
+    conn, cursor = db_connect("users")
+    try:
+        query = f"UPDATE preferences SET {preference} = ? WHERE user_id = ?"
+        cursor.execute(query, (value, user_id))
+    except:
+        raise
+    conn.commit()
+    conn.close()
+
 def __create_users_db__():
     conn, cursor = db_connect("users")
     cursor.execute("""

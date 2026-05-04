@@ -163,6 +163,27 @@ document.querySelectorAll("a").forEach(a => {
   });
 });
 
+document.querySelectorAll(".preference-form select").forEach(select => {
+    select.addEventListener("change", () => {
+        const form = select.closest("form");
+
+        const body = new FormData(form)
+        select.disabled = true;
+
+        fetch("/set_preference", { method: "POST", body: body })
+        .then(response => response.json())
+        .then(data => {
+            select.disabled = false;
+            if (data.status === "success") {
+                location.reload()
+            }
+            else if (data.status === "error") {
+                console.error("[JS] Something went wrong.")
+            }
+        })
+    })
+})
+
 document.addEventListener("DOMContentLoaded", () => {
     const toggle = document.getElementById("hide-toggle");
     if (!toggle) return;

@@ -84,21 +84,21 @@ def channel(channel_id):
     if "user_id" not in session:
         return redirect(url_for("login"))
 
-    sort_by = request.args.get("sort_by", "date_saved")
+    playlists_sort_by = db.get_preferences(session["user_id"])["playlists_sort_by"]
 
     playlists = db.get_saved_playlists(session["username"], channel_id)
     channel_name = db.get_channel_data(session["username"], playlists[0]["channel_id"])["name"] if playlists else None
 
-    if sort_by == "date_saved":
+    if playlists_sort_by == "date_saved":
         playlists.sort(key=lambda p: p["date_saved"], reverse=True)
-    elif sort_by == "date_watched":
+    elif playlists_sort_by == "last_watched":
         playlists.sort(key=lambda p: p["last_watched"], reverse=True)
-    elif sort_by == "title":
+    elif playlists_sort_by == "title":
         playlists.sort(key=lambda p: p["title"].lower())
-    elif sort_by == "progress":
+    elif playlists_sort_by == "progress":
         playlists.sort(key=lambda p: p["progress"], reverse=True)
 
-    return render_template("index.html", playlists=playlists, channel_name=channel_name, sort_by=sort_by)
+    return render_template("index.html", playlists=playlists, channel_name=channel_name, playlists_sort_by=playlists_sort_by)
 
 @app.route("/search", methods=["GET", "POST"])
 def search():
@@ -256,6 +256,29 @@ def fetch_playlist(playlist_id):
     db.insert_or_update_videos(session["username"], videos)
 
     return jsonify({"status": "success"})
+
+@app.route("/set_preference", methods=["POST"])
+def set_preference():
+    PREFERENCES = [
+        "playlists_sort_by",
+        "playlists_hide_completed",
+        "videos_hide_watched",
+        "search_results_per_page",
+        "search_playlists_sort_by",
+        "search_playlists_hide_saved"
+    ]
+
+    for preference in PREFERENCES:
+        value = request.form.get(preference)
+        if value:
+            try:
+                db.set_preference(session["user_id"], preference, value)
+                return jsonify({"status": "success"})
+            except Exception as e:
+                print("Something went wrong. Message: ", e)
+                return jsonify({"status": "error"}), 500
+
+    return jsonify({"status": "error"}), 400
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)
