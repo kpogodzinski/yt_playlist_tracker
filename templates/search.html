@@ -10,7 +10,7 @@
     {% if channels %}
         <hr />
         <h2>Found channels</h2>
-        <p>Total: {{ channels | length }}</p>
+        <p>Total results: <strong>{{ total_results }}</strong></p>
         <form class="preference-form" method="POST" action="/set_preference">
             <label for="search_results_per_page">Results per page:</label>
             <select id="search_results_per_page" name="search_results_per_page">
@@ -53,7 +53,7 @@
     {% elif playlists %}
         <hr />
         <h2>{{ channel_name }}'s playlists</h2>
-        <p>Total: {{ playlists | length }}</p>
+        <p>Total playlists: <strong>{{ total_playlists }}</strong></p>
         <form class="preference-form" method="POST" action="/set_preference">
             <label for="search_playlists_per_page">Playlists per page:</label>
             <select id="search_playlists_per_page" name="search_playlists_per_page">

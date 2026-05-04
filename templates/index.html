@@ -3,7 +3,7 @@
 {% block content %}
     {% if channels %}
         <h2>Your saved channels</h2>
-        <p>Total: {{ channels | length }}</p>
+        <p>Total channels: {{ channels | length }}</p>
         <div class="grid">
         {% for channel in channels %}
             <a href="{{ url_for('channel', channel_id=channel.id) }}" class="card-link">
@@ -16,7 +16,7 @@
     </div>
     {% elif playlists %}
         <h2>Your {{ channel_name }}'s saved playlists</h2>
-        <p>Total: {{ playlists | length }}</p>
+        <p>Total playlists: {{ playlists | length }}</p>
         <form class="preference-form" method="POST" action="/set_preference">
             <label for="playlists_sort_by">Sort by:</label>
             <select id="playlists_sort_by" name="playlists_sort_by">

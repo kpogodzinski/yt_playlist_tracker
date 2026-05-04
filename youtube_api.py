@@ -21,17 +21,25 @@ def get_channel_playlists(channel_id, limit, page_token=None):
     data = response.json()
     playlists.extend(data.get("items", []))
     tokens = [data.get("prevPageToken"), data.get("nextPageToken")]
+    total_playlists = data.get("pageInfo").get("totalResults")
 
-    data = [{
-        "id": playlist["id"],
-        "title": playlist["snippet"]["title"],
-        "thumbnail": playlist["snippet"]["thumbnails"]["high"]["url"],
-        "channel_id": playlist["snippet"]["channelId"],
-        "channel_name": playlist["snippet"]["channelTitle"],
-        "date_created": playlist["snippet"]["publishedAt"]
-    } for playlist in playlists]
+    data = {
+        "playlists": [],
+        "tokens": tokens,
+        "total_playlists": total_playlists,
+    }
 
-    return data, tokens
+    for playlist in playlists:
+        data["playlists"].append({
+            "id": playlist["id"],
+            "title": playlist["snippet"]["title"],
+            "thumbnail": playlist["snippet"]["thumbnails"]["high"]["url"],
+            "channel_id": playlist["snippet"]["channelId"],
+            "channel_name": playlist["snippet"]["channelTitle"],
+            "date_created": playlist["snippet"]["publishedAt"]
+        })
+
+    return data
 
 def get_playlist_data(playlist_id):
     url = "https://www.googleapis.com/youtube/v3/playlists"
@@ -156,7 +164,6 @@ def get_videos(playlist_id):
     return data
 
 def search_channels(query, limit, page_token=None):
-    channels = []
     url = "https://www.googleapis.com/youtube/v3/search"
     params = {
         "part": "snippet",
@@ -169,13 +176,18 @@ def search_channels(query, limit, page_token=None):
 
     response = requests.get(url, params=params)
     data = response.json()
-    channels.extend(data.get("items", []))
+    channels = data.get("items", [])
     tokens = [data.get("prevPageToken"), data.get("nextPageToken")]
+    total_results = data.get("pageInfo").get("totalResults")
 
-    data = []
+    data = {
+        "channels": [],
+        "tokens": tokens,
+        "total_results": total_results
+    }
     for channel in channels:
         try:
-            data.append({
+            data["channels"].append({
                 "id": channel["id"]["channelId"],
                 "title": channel["snippet"]["title"],
                 "thumbnail": channel["snippet"]["thumbnails"]["high"]["url"]
@@ -183,4 +195,4 @@ def search_channels(query, limit, page_token=None):
         except KeyError:
             print(f"Channel {channel['id']} could not be loaded.")
 
-    return data, tokens
+    return data

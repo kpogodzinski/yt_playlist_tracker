@@ -111,6 +111,7 @@ def search():
         return redirect(url_for("login"))
 
     search_results_per_page = db.get_preferences(session["user_id"])["search_results_per_page"]
+    total_results = 0
     query = ""
     channels = []
     tokens = [None, None]
@@ -118,12 +119,16 @@ def search():
     if request.method == "POST":
         query = request.form.get("query")
         token = request.form.get("token")
-        channels, tokens = yt.search_channels(query, search_results_per_page, token)
+        data = yt.search_channels(query, search_results_per_page, token)
+        channels = data["channels"]
+        tokens = data["tokens"]
+        total_results = data["total_results"]
 
     return render_template("search.html",
                            channels=channels,
                            query=query,
                            search_results_per_page=search_results_per_page,
+                           total_results=total_results,
                            prevToken=tokens[0],
                            nextToken=tokens[1])
 
@@ -136,7 +141,10 @@ def search_channel(channel_id):
     search_playlists_per_page = db.get_preferences(session["user_id"])["search_playlists_per_page"]
     search_playlists_hide_saved = db.get_preferences(session["user_id"])["search_playlists_hide_saved"]
 
-    playlists, tokens = yt.get_channel_playlists(channel_id, search_playlists_per_page)
+    data = yt.get_channel_playlists(channel_id, search_playlists_per_page)
+    playlists = data["playlists"]
+    tokens = data["tokens"]
+    total_playlists = data["total_playlists"]
     saved_playlists = db.get_saved_playlist_ids(session["username"])
     channel_name = playlists[0]["channel_name"] if playlists else None
 
@@ -150,7 +158,10 @@ def search_channel(channel_id):
 
     if request.method == "POST":
         token = request.form.get("token")
-        playlists, tokens = yt.get_channel_playlists(channel_id, search_playlists_per_page, token)
+        data = yt.get_channel_playlists(channel_id, search_playlists_per_page, token)
+        playlists = data["playlists"]
+        tokens = data["tokens"]
+        total_playlists = data["total_playlists"]
 
     return render_template("search.html",
                            channel_name=channel_name,
@@ -159,6 +170,7 @@ def search_channel(channel_id):
                            search_playlists_sort_by=search_playlists_sort_by,
                            search_playlists_per_page=search_playlists_per_page,
                            search_playlists_hide_saved=search_playlists_hide_saved,
+                           total_playlists=total_playlists,
                            prevToken=tokens[0],
                            nextToken=tokens[1])
 
