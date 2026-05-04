@@ -30,14 +30,17 @@ def get_channel_playlists(channel_id, limit, page_token=None):
     }
 
     for playlist in playlists:
-        data["playlists"].append({
-            "id": playlist["id"],
-            "title": playlist["snippet"]["title"],
-            "thumbnail": playlist["snippet"]["thumbnails"]["high"]["url"],
-            "channel_id": playlist["snippet"]["channelId"],
-            "channel_name": playlist["snippet"]["channelTitle"],
-            "date_created": playlist["snippet"]["publishedAt"]
-        })
+        try:
+            data["playlists"].append({
+                "id": playlist["id"],
+                "title": playlist["snippet"]["title"],
+                "thumbnail": playlist["snippet"]["thumbnails"]["high"]["url"],
+                "channel_id": playlist["snippet"]["channelId"],
+                "channel_name": playlist["snippet"]["channelTitle"],
+                "date_created": playlist["snippet"]["publishedAt"]
+            })
+        except KeyError:
+            print(f"Playlist {playlist['id']} could not be loaded.")
 
     return data
 
