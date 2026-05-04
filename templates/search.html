@@ -54,14 +54,14 @@
         <hr />
         <h2>{{ channel_name }}'s playlists</h2>
         <p>Total: {{ playlists | length }}</p>
-        <form method="GET">
-            <label for="sort_by">Sort by:</label>
-            <select id="sort_by" name="sort_by" onchange="this.form.submit()">
-                <option value="title" {% if sort_by == "title" %}selected{% endif %}>Title</option>
-                <option value="date_created" {% if sort_by == "date_created" %}selected{% endif %}>Date created</option>
+        <form class="preference-form" method="POST" action="/set_preference">
+            <label for="search_playlists_sort_by">Sort by:</label>
+            <select id="search_playlists_sort_by" name="search_playlists_sort_by">
+                <option value="title" {% if search_playlists_sort_by == "title" %}selected{% endif %}>Title</option>
+                <option value="date_created" {% if search_playlists_sort_by == "date_created" %}selected{% endif %}>Date created</option>
             </select>
         </form>
-        <button class="back-btn" onclick="history.back()">< Go back</button>
+        <button class="back-btn" onclick="history.back()">&lt; Go back</button>
         <label class="toggle-switch">
           <input type="checkbox" id="hide-toggle">
           <span class="slider"></span>

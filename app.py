@@ -128,15 +128,15 @@ def search_channel(channel_id):
     if "user_id" not in session:
         return redirect(url_for("login"))
 
-    sort_by = request.args.get("sort_by", "date_created")
+    search_playlists_sort_by = db.get_preferences(session["user_id"])["search_playlists_sort_by"]
 
     playlists = yt.get_channel_playlists(channel_id)
     saved_playlists = db.get_saved_playlist_ids(session["username"])
     channel_name = playlists[0]["channel_name"] if playlists else None
 
-    if sort_by == "title":
+    if search_playlists_sort_by == "title":
         playlists.sort(key=lambda p: p["title"].lower())
-    elif sort_by == "date_created":
+    elif search_playlists_sort_by == "date_created":
         playlists.sort(key=lambda p: p["date_created"], reverse=True)
 
     if not playlists:
@@ -146,7 +146,7 @@ def search_channel(channel_id):
                            channel_name=channel_name,
                            playlists=playlists,
                            saved_playlists=saved_playlists,
-                           sort_by=sort_by)
+                           search_playlists_sort_by=search_playlists_sort_by)
 
 @app.route("/save_playlist/<playlist_id>", methods=["POST"])
 def save_playlist(playlist_id):
