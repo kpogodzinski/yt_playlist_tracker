@@ -6,27 +6,21 @@ from datetime import datetime
 
 YOUTUBE_API_KEY = getenv("YOUTUBE_API_KEY")
 
-def get_channel_playlists(channel_id):
+def get_channel_playlists(channel_id, limit, page_token=None):
     playlists = []
     url = "https://www.googleapis.com/youtube/v3/playlists"
-    page_token = None
-    while True:
-        params = {
-            "part": "snippet",
-            "channelId": channel_id,
-            "maxResults": 50,
-            "key": YOUTUBE_API_KEY
-        }
-        if page_token:
-            params["pageToken"] = page_token
+    params = {
+        "part": "snippet",
+        "channelId": channel_id,
+        "maxResults": limit,
+        "page_token": page_token,
+        "key": YOUTUBE_API_KEY
+    }
 
-        response = requests.get(url, params=params)
-        data = response.json()
-        playlists.extend(data.get("items", []))
-
-        page_token = data.get("nextPageToken")
-        if not page_token:
-            break
+    response = requests.get(url, params=params)
+    data = response.json()
+    playlists.extend(data.get("items", []))
+    tokens = [data.get("prevPageToken"), data.get("nextPageToken")]
 
     data = [{
         "id": playlist["id"],
@@ -36,7 +30,8 @@ def get_channel_playlists(channel_id):
         "channel_name": playlist["snippet"]["channelTitle"],
         "date_created": playlist["snippet"]["publishedAt"]
     } for playlist in playlists]
-    return data
+
+    return data, tokens
 
 def get_playlist_data(playlist_id):
     url = "https://www.googleapis.com/youtube/v3/playlists"

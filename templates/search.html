@@ -21,7 +21,7 @@
                 <option value="50" {% if search_results_per_page == 50 %}selected{% endif %}>50</option>
             </select>
         </form>
-        <form method="POST" action="/search">
+        <form method="POST" action="#">
             {% if prevToken %}
                 <button type="submit" name="token" value="{{ prevToken }}">
                     &lt; Previous page
@@ -77,6 +77,18 @@
           <span class="slider"></span>
           Hide saved playlists
         </label>
+        <form method="POST" action="#">
+            {% if prevToken %}
+                <button type="submit" name="token" value="{{ prevToken }}">
+                    &lt; Previous page
+                </button>
+            {% endif %}
+            {% if nextToken %}
+                <button type="submit" name="token" value="{{ nextToken }}">
+                    Next page &gt;
+                </button>
+            {% endif %}
+        </form>
         <div class="grid">
             {% for playlist in playlists %}
                 {% if not search_playlists_hide_saved or playlist.id not in saved_playlists %}
