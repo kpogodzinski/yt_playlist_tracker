@@ -95,6 +95,7 @@ def __create_users_db__():
                         playlists_hide_completed INTEGER NOT NULL DEFAULT 0,
                         videos_hide_watched INTEGER NOT NULL DEFAULT 0,
                         search_results_per_page INTEGER NOT NULL DEFAULT 10,
+                        search_playlists_per_page INTEGER NOT NULL DEFAULT 10,
                         search_playlists_sort_by TEXT NOT NULL DEFAULT 'date_created',
                         search_playlists_hide_saved INTEGER NOT NULL DEFAULT 0,
                         FOREIGN KEY(user_id) REFERENCES users(id),
@@ -103,6 +104,7 @@ def __create_users_db__():
                         CHECK(playlists_hide_completed IN (0,1)),
                         CHECK(videos_hide_watched IN (0,1)),
                         CHECK(search_results_per_page IN (10, 20, 30, 40, 50)),
+                        CHECK(search_playlists_per_page IN (10, 20, 30, 40, 50)),
                         CHECK(search_playlists_sort_by IN ('date_created', 'title')),
                         CHECK(search_playlists_hide_saved IN (0,1))
                     );

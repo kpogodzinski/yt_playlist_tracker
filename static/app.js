@@ -184,22 +184,42 @@ document.querySelectorAll(".preference-form select").forEach(select => {
     })
 })
 
-document.addEventListener("DOMContentLoaded", () => {
-    const toggle = document.getElementById("hide-toggle");
-    if (!toggle) return;
+document.querySelectorAll(".preference-toggle input[type='checkbox']").forEach(checkbox => {
+    checkbox.addEventListener("change", () => {
+        const body = new FormData();
+        body.append(checkbox.name, checkbox.checked ? "1" : "0");
 
-    toggle.addEventListener("change", () => {
-        let cards = document.querySelectorAll(".card-link");
-        if (cards.length === 0)
-            cards = document.querySelectorAll(".card")
-
-        cards.forEach(card => {
-            if (isCompleted(card)) {
-                card.classList.toggle("hidden", toggle.checked);
+        checkbox.disabled = true;
+        fetch("/set_preference", { method: "POST", body: body })
+        .then(response => response.json())
+        .then(data => {
+            checkbox.disabled = false;
+            if (data.status === "success") {
+                location.reload()
             }
-        });
-    });
-});
+            else if (data.status === "error") {
+                console.error("[JS] Something went wrong.")
+            }
+        })
+    })
+})
+
+// document.addEventListener("DOMContentLoaded", () => {
+//     const toggle = document.getElementById("hide-toggle");
+//     if (!toggle) return;
+//
+//     toggle.addEventListener("change", () => {
+//         let cards = document.querySelectorAll(".card-link");
+//         if (cards.length === 0)
+//             cards = document.querySelectorAll(".card")
+//
+//         cards.forEach(card => {
+//             if (isCompleted(card)) {
+//                 card.classList.toggle("hidden", toggle.checked);
+//             }
+//         });
+//     });
+// });
 
 function isCompleted(card) {
     return (

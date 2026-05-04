@@ -85,6 +85,7 @@ def channel(channel_id):
         return redirect(url_for("login"))
 
     playlists_sort_by = db.get_preferences(session["user_id"])["playlists_sort_by"]
+    playlists_hide_completed = db.get_preferences(session["user_id"])["playlists_hide_completed"]
 
     playlists = db.get_saved_playlists(session["username"], channel_id)
     channel_name = db.get_channel_data(session["username"], playlists[0]["channel_id"])["name"] if playlists else None
@@ -98,28 +99,31 @@ def channel(channel_id):
     elif playlists_sort_by == "progress":
         playlists.sort(key=lambda p: p["progress"], reverse=True)
 
-    return render_template("index.html", playlists=playlists, channel_name=channel_name, playlists_sort_by=playlists_sort_by)
+    return render_template("index.html",
+                           playlists=playlists,
+                           channel_name=channel_name,
+                           playlists_sort_by=playlists_sort_by,
+                           playlists_hide_completed=playlists_hide_completed)
 
 @app.route("/search", methods=["GET", "POST"])
 def search():
     if "user_id" not in session:
         return redirect(url_for("login"))
 
+    search_results_per_page = db.get_preferences(session["user_id"])["search_results_per_page"]
     query = ""
-    limit = 10
     channels = []
     tokens = [None, None]
 
     if request.method == "POST":
-        limit = int(request.form.get("limit"))
         query = request.form.get("query")
         token = request.form.get("token")
-        channels, tokens = yt.search_channels(query, limit, token)
+        channels, tokens = yt.search_channels(query, search_results_per_page, token)
 
     return render_template("search.html",
                            channels=channels,
                            query=query,
-                           limit=limit,
+                           search_results_per_page=search_results_per_page,
                            prevToken=tokens[0],
                            nextToken=tokens[1])
 
@@ -129,6 +133,8 @@ def search_channel(channel_id):
         return redirect(url_for("login"))
 
     search_playlists_sort_by = db.get_preferences(session["user_id"])["search_playlists_sort_by"]
+    search_playlists_per_page = db.get_preferences(session["user_id"])["search_playlists_per_page"]
+    search_playlists_hide_saved = db.get_preferences(session["user_id"])["search_playlists_hide_saved"]
 
     playlists = yt.get_channel_playlists(channel_id)
     saved_playlists = db.get_saved_playlist_ids(session["username"])
@@ -146,7 +152,9 @@ def search_channel(channel_id):
                            channel_name=channel_name,
                            playlists=playlists,
                            saved_playlists=saved_playlists,
-                           search_playlists_sort_by=search_playlists_sort_by)
+                           search_playlists_sort_by=search_playlists_sort_by,
+                           search_playlists_per_page=search_playlists_per_page,
+                           search_playlists_hide_saved=search_playlists_hide_saved)
 
 @app.route("/save_playlist/<playlist_id>", methods=["POST"])
 def save_playlist(playlist_id):
@@ -187,6 +195,8 @@ def playlist_details(playlist_id):
     if "user_id" not in session:
         return redirect(url_for("login"))
 
+    videos_hide_watched = db.get_preferences(session["user_id"])["videos_hide_watched"]
+
     saved_playlists = db.get_saved_playlist_ids(session["username"])
     if playlist_id in saved_playlists:
         playlist_data = db.get_playlist_data(session["username"], playlist_id)
@@ -214,7 +224,8 @@ def playlist_details(playlist_id):
     return render_template("playlist.html",
                            playlist=playlist_data,
                            saved_playlists=saved_playlists,
-                           videos=videos)
+                           videos=videos,
+                           videos_hide_watched=videos_hide_watched)
 
 @app.route("/watch_video/<video_id>", methods=["POST"])
 def watch_video(video_id):
@@ -264,6 +275,7 @@ def set_preference():
         "playlists_hide_completed",
         "videos_hide_watched",
         "search_results_per_page",
+        "search_playlists_per_page",
         "search_playlists_sort_by",
         "search_playlists_hide_saved"
     ]
