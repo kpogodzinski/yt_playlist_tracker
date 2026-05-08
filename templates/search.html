@@ -2,8 +2,8 @@
 
 {% block content %}
     <h2>Search for a channel</h2>
-    <form method="POST" action="/search">
-        <input type="text" name="query" placeholder="Enter a channel name" value="{{ query }}"/>
+    <form method="GET" action="/search">
+        <input type="text" name="q" placeholder="Enter a channel name" value="{{ query }}"/>
         <button type="submit">Search</button>
     </form>
     <br />
@@ -21,19 +21,21 @@
                 <option value="50" {% if search_results_per_page == 50 %}selected{% endif %}>50</option>
             </select>
         </form>
-        <form method="POST" action="#">
+        <div class="pagination">
             {% if prevToken %}
-                <button type="submit" name="token" value="{{ prevToken }}">
+                <a class="button" href="/search?q={{ query }}&page={{ current_page - 1 }}">
                     &lt; Previous page
-                </button>
+                </a>
             {% endif %}
+
+            <p>Page {{ current_page }} of {{ ceil(total_results / search_results_per_page) }}</p>
+
             {% if nextToken %}
-                <button type="submit" name="token" value="{{ nextToken }}">
+                <a class="button" href="/search?q={{ query }}&page={{ current_page + 1 }}">
                     Next page &gt;
-                </button>
+                </a>
             {% endif %}
-            <input type="hidden" name="query" value="{{ query }}" />
-        </form>
+        </div>
         <div class="grid">
             {% for channel in channels %}
                 <a href="{{ url_for('search_channel', channel_id=channel.id) }}"

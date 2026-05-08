@@ -3,14 +3,17 @@ import sqlite3
 from dotenv import load_dotenv
 from os import getenv
 from datetime import timedelta
+from math import ceil
 
 load_dotenv()
 
 import database_manager as db
 import youtube_api as yt
+from pagination_cache import *
 
 app = Flask(__name__)
 app.secret_key = getenv('SECRET_KEY')
+app.jinja_env.globals.update(ceil=ceil)
 
 @app.before_request
 def permanent_session():
@@ -105,30 +108,36 @@ def channel(channel_id):
                            playlists_sort_by=playlists_sort_by,
                            playlists_hide_completed=playlists_hide_completed)
 
-@app.route("/search", methods=["GET", "POST"])
+@app.route("/search", methods=["GET"])
 def search():
     if "user_id" not in session:
         return redirect(url_for("login"))
 
     search_results_per_page = db.get_preferences(session["user_id"])["search_results_per_page"]
-    total_results = 0
-    query = ""
+
+    query = request.args.get("q", "")
+    current_page = int(request.args.get("page", 1))
+
     channels = []
     tokens = [None, None]
+    total_results = 0
 
-    if request.method == "POST":
-        query = request.form.get("query")
-        token = request.form.get("token")
+    if query:
+        token = get_token(query, current_page)
         data = yt.search_channels(query, search_results_per_page, token)
+
         channels = data["channels"]
         tokens = data["tokens"]
         total_results = data["total_results"]
+
+        cache_token(query, current_page, tokens[1])
 
     return render_template("search.html",
                            channels=channels,
                            query=query,
                            search_results_per_page=search_results_per_page,
                            total_results=total_results,
+                           current_page=current_page,
                            prevToken=tokens[0],
                            nextToken=tokens[1])
 
