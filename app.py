@@ -7,13 +7,15 @@ from math import ceil
 
 load_dotenv()
 
-import database_manager as db
-import youtube_api as yt
-from pagination_cache import *
-
 app = Flask(__name__)
 app.secret_key = getenv('SECRET_KEY')
 app.jinja_env.globals.update(ceil=ceil)
+
+import database_manager as db
+import youtube_api as yt
+import cache as cache
+
+cache.cache.init_app(app)
 
 @app.before_request
 def permanent_session():
@@ -125,14 +127,14 @@ def search():
     total_results = 0
 
     if query:
-        token = get_token(query, current_page)
+        token = cache.get_token(query, current_page)
         data = yt.search_channels(query, search_results_per_page, token)
 
         channels = data["channels"]
         tokens = data["tokens"]
         total_results = data["total_results"]
 
-        cache_token(query, current_page, tokens[1])
+        cache.cache_token(query, current_page, tokens[1])
 
     return render_template("search.html",
                            channels=channels,
@@ -156,27 +158,25 @@ def search_channel(channel_id):
     if current_page < 1:
         current_page = 1
 
-    if current_page > 1:
-        token = get_token(channel_id, current_page)
-        data = yt.get_channel_playlists(channel_id, search_playlists_per_page, token)
-        playlists = data["playlists"]
-        tokens = data["tokens"]
-        total_playlists = data["total_playlists"]
-    else:
-        data = yt.get_channel_playlists(channel_id, search_playlists_per_page)
-        playlists = data["playlists"]
-        tokens = data["tokens"]
-        total_playlists = data["total_playlists"]
+    if cache.get_playlists(channel_id) is None:
+        playlists = yt.get_channel_playlists(channel_id)
+        cache.cache_playlists(channel_id, playlists)
 
-    cache_token(channel_id, current_page, tokens[1])
-
-    saved_playlists = db.get_saved_playlist_ids(session["username"])
-    channel_name = playlists[0]["channel_name"] if playlists else None
+    playlists = cache.get_playlists(channel_id)
+    total_playlists = playlists["total_playlists"]
+    playlists = playlists["playlists"]
 
     if search_playlists_sort_by == "title":
         playlists.sort(key=lambda p: p["title"].lower())
     elif search_playlists_sort_by == "date_created":
         playlists.sort(key=lambda p: p["date_created"], reverse=True)
+
+    start = (current_page - 1) * search_playlists_per_page
+    end = start + search_playlists_per_page
+    playlists = playlists[start:end]
+
+    saved_playlists = db.get_saved_playlist_ids(session["username"])
+    channel_name = playlists[0]["channel_name"] if playlists else None
 
     if not playlists:
         playlists = "empty"
@@ -190,9 +190,7 @@ def search_channel(channel_id):
                            search_playlists_per_page=search_playlists_per_page,
                            search_playlists_hide_saved=search_playlists_hide_saved,
                            total_playlists=total_playlists,
-                           current_page=current_page,
-                           prevToken=tokens[0],
-                           nextToken=tokens[1])
+                           current_page=current_page)
 
 @app.route("/save_playlist/<playlist_id>", methods=["POST"])
 def save_playlist(playlist_id):

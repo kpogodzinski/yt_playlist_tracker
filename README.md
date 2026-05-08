@@ -20,6 +20,7 @@ The application uses the YouTube Data API to fetch channels, playlists and video
 ## Requirements
 
 - `Flask v3.1.3`
+- `flask-caching v2.3.1`
 - `python-dotenv v1.2.1`
 - `Werkzeug v3.1.6`
 - `requests v2.32.5`

@@ -6,26 +6,37 @@ from datetime import datetime
 
 YOUTUBE_API_KEY = getenv("YOUTUBE_API_KEY")
 
-def get_channel_playlists(channel_id, limit, page_token=None):
+def get_channel_playlists(channel_id):
     playlists = []
     url = "https://www.googleapis.com/youtube/v3/playlists"
+
     params = {
         "part": "snippet",
         "channelId": channel_id,
-        "maxResults": limit,
-        "page_token": page_token,
+        "maxResults": 50,
         "key": YOUTUBE_API_KEY
     }
 
     response = requests.get(url, params=params)
     data = response.json()
     playlists.extend(data.get("items", []))
-    tokens = [data.get("prevPageToken"), data.get("nextPageToken")]
     total_playlists = data.get("pageInfo").get("totalResults")
+
+    while data.get("nextPageToken", None):
+        params = {
+            "part": "snippet",
+            "channelId": channel_id,
+            "maxResults": 50,
+            "page_token": data.get("nextPageToken"),
+            "key": YOUTUBE_API_KEY
+        }
+
+        response = requests.get(url, params=params)
+        data = response.json()
+        playlists.extend(data.get("items", []))
 
     data = {
         "playlists": [],
-        "tokens": tokens,
         "total_playlists": total_playlists,
     }
 
