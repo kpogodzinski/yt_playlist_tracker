@@ -108,7 +108,7 @@ def channel(channel_id):
                            playlists_sort_by=playlists_sort_by,
                            playlists_hide_completed=playlists_hide_completed)
 
-@app.route("/search", methods=["GET"])
+@app.route("/search")
 def search():
     if "user_id" not in session:
         return redirect(url_for("login"))
@@ -117,6 +117,8 @@ def search():
 
     query = request.args.get("q", "")
     current_page = int(request.args.get("page", 1))
+    if current_page < 1:
+        current_page = 1
 
     channels = []
     tokens = [None, None]
@@ -141,7 +143,7 @@ def search():
                            prevToken=tokens[0],
                            nextToken=tokens[1])
 
-@app.route("/search/<channel_id>", methods=["GET", "POST"])
+@app.route("/search/<channel_id>")
 def search_channel(channel_id):
     if "user_id" not in session:
         return redirect(url_for("login"))
@@ -150,10 +152,24 @@ def search_channel(channel_id):
     search_playlists_per_page = db.get_preferences(session["user_id"])["search_playlists_per_page"]
     search_playlists_hide_saved = db.get_preferences(session["user_id"])["search_playlists_hide_saved"]
 
-    data = yt.get_channel_playlists(channel_id, search_playlists_per_page)
-    playlists = data["playlists"]
-    tokens = data["tokens"]
-    total_playlists = data["total_playlists"]
+    current_page = int(request.args.get("page", 1))
+    if current_page < 1:
+        current_page = 1
+
+    if current_page > 1:
+        token = get_token(channel_id, current_page)
+        data = yt.get_channel_playlists(channel_id, search_playlists_per_page, token)
+        playlists = data["playlists"]
+        tokens = data["tokens"]
+        total_playlists = data["total_playlists"]
+    else:
+        data = yt.get_channel_playlists(channel_id, search_playlists_per_page)
+        playlists = data["playlists"]
+        tokens = data["tokens"]
+        total_playlists = data["total_playlists"]
+
+    cache_token(channel_id, current_page, tokens[1])
+
     saved_playlists = db.get_saved_playlist_ids(session["username"])
     channel_name = playlists[0]["channel_name"] if playlists else None
 
@@ -165,14 +181,8 @@ def search_channel(channel_id):
     if not playlists:
         playlists = "empty"
 
-    if request.method == "POST":
-        token = request.form.get("token")
-        data = yt.get_channel_playlists(channel_id, search_playlists_per_page, token)
-        playlists = data["playlists"]
-        tokens = data["tokens"]
-        total_playlists = data["total_playlists"]
-
     return render_template("search.html",
+                           channel_id=channel_id,
                            channel_name=channel_name,
                            playlists=playlists,
                            saved_playlists=saved_playlists,
@@ -180,6 +190,7 @@ def search_channel(channel_id):
                            search_playlists_per_page=search_playlists_per_page,
                            search_playlists_hide_saved=search_playlists_hide_saved,
                            total_playlists=total_playlists,
+                           current_page=current_page,
                            prevToken=tokens[0],
                            nextToken=tokens[1])
 

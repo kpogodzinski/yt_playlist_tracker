@@ -79,18 +79,21 @@
           <span class="slider"></span>
           Hide saved playlists
         </label>
-        <form method="POST" action="#">
+        <div class="pagination">
             {% if prevToken %}
-                <button type="submit" name="token" value="{{ prevToken }}">
+                <a class="button" href="/search/{{ channel_id }}?page={{ current_page - 1 }}">
                     &lt; Previous page
-                </button>
+                </a>
             {% endif %}
+
+            <p>Page {{ current_page }} of {{ ceil(total_playlists / search_playlists_per_page) }}</p>
+
             {% if nextToken %}
-                <button type="submit" name="token" value="{{ nextToken }}">
+                <a class="button" href="/search/{{ channel_id }}?page={{ current_page + 1 }}">
                     Next page &gt;
-                </button>
+                </a>
             {% endif %}
-        </form>
+        </div>
         <div class="grid">
             {% for playlist in playlists %}
                 {% if not search_playlists_hide_saved or playlist.id not in saved_playlists %}
