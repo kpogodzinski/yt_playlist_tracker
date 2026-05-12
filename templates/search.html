@@ -22,7 +22,7 @@
             </select>
         </form>
         <div class="pagination">
-            {% if prevToken %}
+            {% if current_page > 1 %}
                 <a class="button" href="/search?q={{ query }}&page={{ current_page - 1 }}">
                     &lt; Previous page
                 </a>
@@ -30,7 +30,7 @@
 
             <p>Page {{ current_page }} of {{ ceil(total_results / search_results_per_page) }}</p>
 
-            {% if nextToken %}
+            {% if current_page < ceil(total_results / search_results_per_page) %}
                 <a class="button" href="/search?q={{ query }}&page={{ current_page + 1 }}">
                     Next page &gt;
                 </a>

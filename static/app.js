@@ -154,15 +154,6 @@ document.querySelectorAll(".fetchall-btn").forEach(button => {
     })
 });
 
-document.querySelectorAll("a").forEach(a => {
-  a.addEventListener("click", e => {
-    if (window.navigator.standalone && a.hostname === location.hostname) {
-      e.preventDefault();
-      window.location.href = a.href;
-    }
-  });
-});
-
 document.querySelectorAll(".preference-form select").forEach(select => {
     select.addEventListener("change", () => {
         const form = select.closest("form");
@@ -204,27 +195,12 @@ document.querySelectorAll(".preference-toggle input[type='checkbox']").forEach(c
     })
 })
 
-// document.addEventListener("DOMContentLoaded", () => {
-//     const toggle = document.getElementById("hide-toggle");
-//     if (!toggle) return;
-//
-//     toggle.addEventListener("change", () => {
-//         let cards = document.querySelectorAll(".card-link");
-//         if (cards.length === 0)
-//             cards = document.querySelectorAll(".card")
-//
-//         cards.forEach(card => {
-//             if (isCompleted(card)) {
-//                 card.classList.toggle("hidden", toggle.checked);
-//             }
-//         });
-//     });
-// });
-
-function isCompleted(card) {
-    return (
-        card.querySelector(".progress-fill")?.style.width === "100%" ||
-        card.querySelector(".save-btn")?.disabled ||
-        card.querySelector(".watch-btn")?.classList.contains("watched")
-    );
-}
+/// FOR APPLE IOS SAFARI STANDALONE APP
+document.querySelectorAll("a").forEach(a => {
+    a.addEventListener("click", e => {
+        if (window.navigator.standalone && a.hostname === location.hostname) {
+            e.preventDefault();
+            window.location.href = a.href;
+        }
+    });
+});

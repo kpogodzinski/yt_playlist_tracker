@@ -123,27 +123,38 @@ def search():
         current_page = 1
 
     channels = []
-    tokens = [None, None]
     total_results = 0
 
     if query:
-        token = cache.get_token(query, current_page)
-        data = yt.search_channels(query, search_results_per_page, token)
+        if current_page == 1 and cache.get_channels(query, "first") is None:
+            data = yt.search_channels(query)
+            cache.cache_channels(query, "first", data)
 
-        channels = data["channels"]
-        tokens = data["tokens"]
+        data = cache.get_channels(query, "first")
+        next_token = data["next_token"]
         total_results = data["total_results"]
+        channels = data["channels"]
 
-        cache.cache_token(query, current_page, tokens[1])
+        required_items = current_page * search_results_per_page
+        while len(channels) < required_items and next_token:
+            if cache.get_channels(query, next_token) is None:
+                data = yt.search_channels(query, next_token)
+                cache.cache_channels(query, next_token, data)
+
+            data = cache.get_channels(query, next_token)
+            channels.extend(data["channels"])
+            next_token = data["next_token"]
+
+        start = (current_page - 1) * search_results_per_page
+        end = start + search_results_per_page
+        channels = channels[start:end]
 
     return render_template("search.html",
                            channels=channels,
                            query=query,
                            search_results_per_page=search_results_per_page,
                            total_results=total_results,
-                           current_page=current_page,
-                           prevToken=tokens[0],
-                           nextToken=tokens[1])
+                           current_page=current_page)
 
 @app.route("/search/<channel_id>")
 def search_channel(channel_id):
