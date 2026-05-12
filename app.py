@@ -126,7 +126,7 @@ def search():
     total_results = 0
 
     if query:
-        if current_page == 1 and cache.get_channels(query, "first") is None:
+        if cache.get_channels(query, "first") is None:
             data = yt.search_channels(query)
             cache.cache_channels(query, "first", data)
 
