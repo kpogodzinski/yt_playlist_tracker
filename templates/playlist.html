@@ -4,7 +4,7 @@
     <h2>{{ playlist.title }}</h2>
     <div class="progress-container">
         <div class="progress-text">
-            {{ videos | selectattr('is_watched', 'equalto', 1) | list | length }} / {{ videos | length }} watched
+            {{ watched_videos }} / {{ total_videos }} watched ({{ playlist.progress }}%)
         </div>
         <div class="progress-bar">
             <div class="progress-fill{% if playlist.progress == 100 %} complete{% endif %}"
@@ -38,24 +38,22 @@
     </label>
     <div class="grid">
         {% for video in videos %}
-            {% if not videos_hide_watched or not video.is_watched %}
-                <div class="card">
-                    <h4>{{ video.title }}</h4>
-                    <div class="thumb">
-                        <img src="{{ video.thumbnail }}"/>
-                        <p class="duration">{{ video.duration }}</p>
-                    </div>
-                    <p class="published">Published: {{ video.published }}</p>
-                    <button class="watch-btn{% if video.is_watched %} watched{% endif %}"
-                            data-video="{{ video.id }}">
-                        {% if video.is_watched %}
-                            Watched
-                        {% else %}
-                            Not watched
-                        {% endif %}
-                    </button>
+            <div class="card">
+                <h4>{{ video.title }}</h4>
+                <div class="thumb">
+                    <img src="{{ video.thumbnail }}"/>
+                    <p class="duration">{{ video.duration }}</p>
                 </div>
-            {% endif %}
+                <p class="published">Published: {{ video.published }}</p>
+                <button class="watch-btn{% if video.is_watched %} watched{% endif %}"
+                        data-video="{{ video.id }}">
+                    {% if video.is_watched %}
+                        Watched
+                    {% else %}
+                        Not watched
+                    {% endif %}
+                </button>
+            </div>
         {% endfor %}
     </div>
 {% endblock %}

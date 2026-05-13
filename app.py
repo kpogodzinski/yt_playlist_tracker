@@ -267,8 +267,8 @@ def playlist_details(playlist_id):
         return redirect(url_for("login"))
 
     videos_hide_watched = db.get_preferences(session["user_id"])["videos_hide_watched"]
-
     saved_playlists = db.get_saved_playlist_ids(session["username"])
+
     if playlist_id in saved_playlists:
         playlist_data = db.get_playlist_data(session["username"], playlist_id)
         videos = db.get_playlist_videos(session["username"], playlist_id)
@@ -292,10 +292,17 @@ def playlist_details(playlist_id):
             "is_watched": 0
         } for video in data]
 
+    total_videos = len(videos)
+    watched_videos = len([v for v in videos if v["is_watched"]])
+    if videos_hide_watched:
+        videos = [v for v in videos if not v["is_watched"]]
+
     return render_template("playlist.html",
                            playlist=playlist_data,
                            saved_playlists=saved_playlists,
                            videos=videos,
+                           watched_videos=watched_videos,
+                           total_videos=total_videos,
                            videos_hide_watched=videos_hide_watched)
 
 @app.route("/watch_video/<video_id>", methods=["POST"])
