@@ -22,11 +22,15 @@ def register_user(username, password):
     try:
         cursor.execute("INSERT INTO users (username, password) VALUES (?, ?)",
                        (username, password_hash))
+        cursor.execute("INSERT INTO preferences (user_id) SELECT id FROM users WHERE username = ?",
+                       (username,))
     except sqlite3.OperationalError as e:
         if "no such table" in str(e):
             __create_users_db__()
             cursor.execute("INSERT INTO users (username, password) VALUES (?, ?)",
                            (username, password_hash))
+            cursor.execute("INSERT INTO preferences (user_id) SELECT id FROM users WHERE username = ?",
+                           (username,))
         else:
             raise
 
@@ -58,6 +62,22 @@ def login_user(username, password):
     else:
         return None
 
+def get_preferences(user_id):
+    conn, cursor = db_connect("users")
+    row = cursor.execute("SELECT * FROM preferences WHERE user_id = (?)", (user_id,)).fetchone()
+    conn.close()
+    return row
+
+def set_preference(user_id, preference, value):
+    conn, cursor = db_connect("users")
+    try:
+        query = f"UPDATE preferences SET {preference} = ? WHERE user_id = ?"
+        cursor.execute(query, (value, user_id))
+    except:
+        raise
+    conn.commit()
+    conn.close()
+
 def __create_users_db__():
     conn, cursor = db_connect("users")
     cursor.execute("""
@@ -65,6 +85,30 @@ def __create_users_db__():
                         id INTEGER PRIMARY KEY AUTOINCREMENT,
                         username TEXT UNIQUE NOT NULL,
                         password TEXT NOT NULL
+                    );
+                """)
+
+    cursor.execute("""
+                    CREATE TABLE preferences (
+                        user_id INTEGER PRIMARY KEY,
+                        playlists_sort_by TEXT NOT NULL DEFAULT 'date_saved',
+                        playlists_per_page INTEGER NOT NULL DEFAULT 10,
+                        playlists_hide_completed INTEGER NOT NULL DEFAULT 0,
+                        videos_hide_watched INTEGER NOT NULL DEFAULT 0,
+                        search_results_per_page INTEGER NOT NULL DEFAULT 10,
+                        search_playlists_per_page INTEGER NOT NULL DEFAULT 10,
+                        search_playlists_sort_by TEXT NOT NULL DEFAULT 'date_created',
+                        search_playlists_hide_saved INTEGER NOT NULL DEFAULT 0,
+                        FOREIGN KEY(user_id) REFERENCES users(id),
+                        
+                        CHECK(playlists_sort_by IN ('date_saved', 'last_watched', 'title', 'progress')),
+                        CHECK(playlists_per_page IN (10, 20, 30, 40, 50)),
+                        CHECK(playlists_hide_completed IN (0,1)),
+                        CHECK(videos_hide_watched IN (0,1)),
+                        CHECK(search_results_per_page IN (10, 20, 30, 40, 50)),
+                        CHECK(search_playlists_per_page IN (10, 20, 30, 40, 50)),
+                        CHECK(search_playlists_sort_by IN ('date_created', 'title')),
+                        CHECK(search_playlists_hide_saved IN (0,1))
                     );
                 """)
     conn.commit()
@@ -88,7 +132,7 @@ def __create_user_tables__(username):
                     title TEXT,
                     thumbnail TEXT,
                     date_saved TEXT DEFAULT current_timestamp,
-                    last_watched TEXT DEFAULT "1970-01-01",
+                    last_watched TEXT DEFAULT '1970-01-01',
                     progress INTEGER DEFAULT 0,
                     FOREIGN KEY(channel_id) REFERENCES channels(id) ON DELETE RESTRICT
                 );

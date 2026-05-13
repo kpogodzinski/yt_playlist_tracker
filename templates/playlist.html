@@ -4,7 +4,7 @@
     <h2>{{ playlist.title }}</h2>
     <div class="progress-container">
         <div class="progress-text">
-            {{ videos | selectattr('is_watched', 'equalto', 1) | list | length }} / {{ videos | length }} watched
+            {{ watched_videos }} / {{ total_videos }} watched ({{ playlist.progress }}%)
         </div>
         <div class="progress-bar">
             <div class="progress-fill{% if playlist.progress == 100 %} complete{% endif %}"
@@ -31,8 +31,8 @@
     {% if playlist.id in saved_playlists %}
         <button class="fetch-btn" data-playlist="{{ playlist.id }}">Refresh playlist</button>
     {% endif %}
-    <label class="toggle-switch">
-      <input type="checkbox" id="hide-toggle">
+    <label class="toggle-switch preference-toggle">
+      <input type="checkbox" name="videos_hide_watched" {% if videos_hide_watched %}checked{% endif %}>
       <span class="slider"></span>
       Hide watched videos
     </label>

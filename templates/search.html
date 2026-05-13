@@ -2,15 +2,40 @@
 
 {% block content %}
     <h2>Search for a channel</h2>
-    <form method="POST" action="/search">
-        <input type="text" name="query" placeholder="Search for the channel name"/>
+    <form method="GET" action="/search">
+        <input type="text" name="q" placeholder="Enter a channel name" value="{{ query }}"/>
         <button type="submit">Search</button>
     </form>
     <br />
     {% if channels %}
         <hr />
         <h2>Found channels</h2>
-        <p>Total: {{ channels | length }}</p>
+        <p>Total results: <strong>{{ total_results }}</strong></p>
+        <form class="preference-form" method="POST" action="/set_preference">
+            <label for="search_results_per_page">Results per page:</label>
+            <select id="search_results_per_page" name="search_results_per_page">
+                <option value="10" {% if search_results_per_page == 10 %}selected{% endif %}>10</option>
+                <option value="20" {% if search_results_per_page == 20 %}selected{% endif %}>20</option>
+                <option value="30" {% if search_results_per_page == 30 %}selected{% endif %}>30</option>
+                <option value="40" {% if search_results_per_page == 40 %}selected{% endif %}>40</option>
+                <option value="50" {% if search_results_per_page == 50 %}selected{% endif %}>50</option>
+            </select>
+        </form>
+        <div class="pagination">
+            {% if current_page > 1 %}
+                <a class="button" href="/search?q={{ query }}&page={{ current_page - 1 }}">
+                    &lt; Previous page
+                </a>
+            {% endif %}
+
+            <p>Page {{ current_page }} of {{ ceil(total_results / search_results_per_page) }}</p>
+
+            {% if current_page < ceil(total_results / search_results_per_page) %}
+                <a class="button" href="/search?q={{ query }}&page={{ current_page + 1 }}">
+                    Next page &gt;
+                </a>
+            {% endif %}
+        </div>
         <div class="grid">
             {% for channel in channels %}
                 <a href="{{ url_for('search_channel', channel_id=channel.id) }}"
@@ -30,20 +55,48 @@
     {% elif playlists %}
         <hr />
         <h2>{{ channel_name }}'s playlists</h2>
-        <p>Total: {{ playlists | length }}</p>
-        <form method="GET">
-            <label for="sort_by">Sort by:</label>
-            <select id="sort_by" name="sort_by" onchange="this.form.submit()">
-                <option value="title" {% if sort_by == "title" %}selected{% endif %}>Title</option>
-                <option value="date_created" {% if sort_by == "date_created" %}selected{% endif %}>Date created</option>
+        <p>Total playlists: <strong>{{ total_playlists }}</strong></p>
+        {% if search_playlists_hide_saved %}
+            <p>Total unsaved playlists: <strong>{{ visible_playlists }}</strong></p>
+        {% endif %}
+        <button class="back-btn" onclick="history.back()">&lt; Go back</button><br />
+        <form class="preference-form" method="POST" action="/set_preference">
+            <label for="search_playlists_per_page">Playlists per page:</label>
+            <select id="search_playlists_per_page" name="search_playlists_per_page">
+                <option value="10" {% if search_playlists_per_page == 10 %}selected{% endif %}>10</option>
+                <option value="20" {% if search_playlists_per_page == 20 %}selected{% endif %}>20</option>
+                <option value="30" {% if search_playlists_per_page == 30 %}selected{% endif %}>30</option>
+                <option value="40" {% if search_playlists_per_page == 40 %}selected{% endif %}>40</option>
+                <option value="50" {% if search_playlists_per_page == 50 %}selected{% endif %}>50</option>
             </select>
         </form>
-        <button class="back-btn" onclick="history.back()">< Go back</button>
-        <label class="toggle-switch">
-          <input type="checkbox" id="hide-toggle">
+        <form class="preference-form" method="POST" action="/set_preference">
+            <label for="search_playlists_sort_by">Sort by:</label>
+            <select id="search_playlists_sort_by" name="search_playlists_sort_by">
+                <option value="title" {% if search_playlists_sort_by == "title" %}selected{% endif %}>Title</option>
+                <option value="date_created" {% if search_playlists_sort_by == "date_created" %}selected{% endif %}>Date created</option>
+            </select>
+        </form>
+        <label class="toggle-switch preference-toggle">
+          <input type="checkbox" name="search_playlists_hide_saved" {% if search_playlists_hide_saved %}checked{% endif %}>
           <span class="slider"></span>
           Hide saved playlists
         </label>
+        <div class="pagination">
+            {% if current_page > 1 %}
+                <a class="button" href="/search/{{ channel_id }}?page={{ current_page - 1 }}">
+                    &lt; Previous page
+                </a>
+            {% endif %}
+
+            <p>Page {{ current_page }} of {{ ceil(visible_playlists / search_playlists_per_page) }}</p>
+
+            {% if current_page < ceil(visible_playlists / search_playlists_per_page) %}
+                <a class="button" href="/search/{{ channel_id }}?page={{ current_page + 1 }}">
+                    Next page &gt;
+                </a>
+            {% endif %}
+        </div>
         <div class="grid">
             {% for playlist in playlists %}
                 <a href="{{ url_for('playlist_details', playlist_id=playlist.id) }}"

@@ -154,36 +154,53 @@ document.querySelectorAll(".fetchall-btn").forEach(button => {
     })
 });
 
-document.querySelectorAll("a").forEach(a => {
-  a.addEventListener("click", e => {
-    if (window.navigator.standalone && a.hostname === location.hostname) {
-      e.preventDefault();
-      window.location.href = a.href;
-    }
-  });
-});
+document.querySelectorAll(".preference-form select").forEach(select => {
+    select.addEventListener("change", () => {
+        const form = select.closest("form");
 
-document.addEventListener("DOMContentLoaded", () => {
-    const toggle = document.getElementById("hide-toggle");
-    if (!toggle) return;
+        const body = new FormData(form)
+        select.disabled = true;
 
-    toggle.addEventListener("change", () => {
-        let cards = document.querySelectorAll(".card-link");
-        if (cards.length === 0)
-            cards = document.querySelectorAll(".card")
-
-        cards.forEach(card => {
-            if (isCompleted(card)) {
-                card.classList.toggle("hidden", toggle.checked);
+        fetch("/set_preference", { method: "POST", body: body })
+        .then(response => response.json())
+        .then(data => {
+            select.disabled = false;
+            if (data.status === "success") {
+                location.reload()
             }
-        });
+            else if (data.status === "error") {
+                console.error("[JS] Something went wrong.")
+            }
+        })
+    })
+})
+
+document.querySelectorAll(".preference-toggle input[type='checkbox']").forEach(checkbox => {
+    checkbox.addEventListener("change", () => {
+        const body = new FormData();
+        body.append(checkbox.name, checkbox.checked ? "1" : "0");
+
+        checkbox.disabled = true;
+        fetch("/set_preference", { method: "POST", body: body })
+        .then(response => response.json())
+        .then(data => {
+            checkbox.disabled = false;
+            if (data.status === "success") {
+                location.reload()
+            }
+            else if (data.status === "error") {
+                console.error("[JS] Something went wrong.")
+            }
+        })
+    })
+})
+
+/// FOR APPLE IOS SAFARI STANDALONE APP
+document.querySelectorAll("a").forEach(a => {
+    a.addEventListener("click", e => {
+        if (window.navigator.standalone && a.hostname === location.hostname) {
+            e.preventDefault();
+            window.location.href = a.href;
+        }
     });
 });
-
-function isCompleted(card) {
-    return (
-        card.querySelector(".progress-fill")?.style.width === "100%" ||
-        card.querySelector(".save-btn")?.disabled ||
-        card.querySelector(".watch-btn")?.classList.contains("watched")
-    );
-}

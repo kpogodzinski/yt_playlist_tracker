@@ -3,14 +3,19 @@ import sqlite3
 from dotenv import load_dotenv
 from os import getenv
 from datetime import timedelta
+from math import ceil
 
 load_dotenv()
 
-import database_manager as db
-import youtube_api as yt
-
 app = Flask(__name__)
 app.secret_key = getenv('SECRET_KEY')
+app.jinja_env.globals.update(ceil=ceil)
+
+import database_manager as db
+import youtube_api as yt
+import cache as cache
+
+cache.cache.init_app(app)
 
 @app.before_request
 def permanent_session():
@@ -84,59 +89,143 @@ def channel(channel_id):
     if "user_id" not in session:
         return redirect(url_for("login"))
 
-    sort_by = request.args.get("sort_by", "date_saved")
+    current_page = int(request.args.get("page", 1))
+    if current_page < 1:
+        current_page = 1
+
+    preferences = db.get_preferences(session["user_id"])
+    playlists_sort_by = preferences["playlists_sort_by"]
+    playlists_per_page = preferences["playlists_per_page"]
+    playlists_hide_completed = preferences["playlists_hide_completed"]
 
     playlists = db.get_saved_playlists(session["username"], channel_id)
     channel_name = db.get_channel_data(session["username"], playlists[0]["channel_id"])["name"] if playlists else None
 
-    if sort_by == "date_saved":
+    total_playlists = len(playlists)
+    if playlists_hide_completed:
+        playlists = [p for p in playlists if p["progress"] < 100]
+    visible_playlists = len(playlists)
+
+    if playlists_sort_by == "date_saved":
         playlists.sort(key=lambda p: p["date_saved"], reverse=True)
-    elif sort_by == "date_watched":
+    elif playlists_sort_by == "last_watched":
         playlists.sort(key=lambda p: p["last_watched"], reverse=True)
-    elif sort_by == "title":
+    elif playlists_sort_by == "title":
         playlists.sort(key=lambda p: p["title"].lower())
-    elif sort_by == "progress":
+    elif playlists_sort_by == "progress":
         playlists.sort(key=lambda p: p["progress"], reverse=True)
 
-    return render_template("index.html", playlists=playlists, channel_name=channel_name, sort_by=sort_by)
+    start = (current_page - 1) * playlists_per_page
+    end = start + playlists_per_page
+    playlists = playlists[start:end]
 
-@app.route("/search", methods=["GET", "POST"])
+    return render_template("index.html",
+                           playlists=playlists,
+                           channel_id=channel_id,
+                           channel_name=channel_name,
+                           playlists_sort_by=playlists_sort_by,
+                           playlists_per_page=playlists_per_page,
+                           playlists_hide_completed=playlists_hide_completed,
+                           total_playlists=total_playlists,
+                           visible_playlists=visible_playlists,
+                           current_page=current_page)
+
+@app.route("/search")
 def search():
     if "user_id" not in session:
         return redirect(url_for("login"))
 
+    query = request.args.get("q", "")
+    current_page = int(request.args.get("page", 1))
+    if current_page < 1:
+        current_page = 1
+
+    search_results_per_page = db.get_preferences(session["user_id"])["search_results_per_page"]
+
     channels = []
+    total_results = 0
 
-    if request.method == "POST":
-        query = request.form.get("query")
-        channels = yt.search_channels(query)
+    if query:
+        if cache.get_channels(query, "first") is None:
+            data = yt.search_channels(query)
+            cache.cache_channels(query, "first", data)
 
-    return render_template("search.html", channels=channels)
+        data = cache.get_channels(query, "first")
+        next_token = data["next_token"]
+        total_results = data["total_results"]
+        channels = data["channels"]
+
+        required_items = current_page * search_results_per_page
+        while len(channels) < required_items and next_token:
+            if cache.get_channels(query, next_token) is None:
+                data = yt.search_channels(query, next_token)
+                cache.cache_channels(query, next_token, data)
+
+            data = cache.get_channels(query, next_token)
+            channels.extend(data["channels"])
+            next_token = data["next_token"]
+
+        start = (current_page - 1) * search_results_per_page
+        end = start + search_results_per_page
+        channels = channels[start:end]
+
+    return render_template("search.html",
+                           channels=channels,
+                           query=query,
+                           search_results_per_page=search_results_per_page,
+                           total_results=total_results,
+                           current_page=current_page)
 
 @app.route("/search/<channel_id>")
 def search_channel(channel_id):
     if "user_id" not in session:
         return redirect(url_for("login"))
 
-    sort_by = request.args.get("sort_by", "date_created")
+    current_page = int(request.args.get("page", 1))
+    if current_page < 1:
+        current_page = 1
 
-    playlists = yt.get_channel_playlists(channel_id)
-    saved_playlists = db.get_saved_playlist_ids(session["username"])
+    search_playlists_sort_by = db.get_preferences(session["user_id"])["search_playlists_sort_by"]
+    search_playlists_per_page = db.get_preferences(session["user_id"])["search_playlists_per_page"]
+    search_playlists_hide_saved = db.get_preferences(session["user_id"])["search_playlists_hide_saved"]
+
+    if cache.get_playlists(channel_id) is None:
+        playlists = yt.get_channel_playlists(channel_id)
+        cache.cache_playlists(channel_id, playlists)
+
+    playlists = cache.get_playlists(channel_id)
+    total_playlists = playlists["total_playlists"]
+    playlists = playlists["playlists"]
     channel_name = playlists[0]["channel_name"] if playlists else None
 
-    if sort_by == "title":
+    saved_playlists = db.get_saved_playlist_ids(session["username"])
+    if search_playlists_hide_saved:
+        playlists = [p for p in playlists if p["id"] not in saved_playlists]
+    visible_playlists = len(playlists)
+
+    if search_playlists_sort_by == "title":
         playlists.sort(key=lambda p: p["title"].lower())
-    elif sort_by == "date_created":
+    elif search_playlists_sort_by == "date_created":
         playlists.sort(key=lambda p: p["date_created"], reverse=True)
+
+    start = (current_page - 1) * search_playlists_per_page
+    end = start + search_playlists_per_page
+    playlists = playlists[start:end]
 
     if not playlists:
         playlists = "empty"
 
     return render_template("search.html",
+                           channel_id=channel_id,
                            channel_name=channel_name,
                            playlists=playlists,
                            saved_playlists=saved_playlists,
-                           sort_by=sort_by)
+                           search_playlists_sort_by=search_playlists_sort_by,
+                           search_playlists_per_page=search_playlists_per_page,
+                           search_playlists_hide_saved=search_playlists_hide_saved,
+                           total_playlists=total_playlists,
+                           visible_playlists=visible_playlists,
+                           current_page=current_page)
 
 @app.route("/save_playlist/<playlist_id>", methods=["POST"])
 def save_playlist(playlist_id):
@@ -177,7 +266,9 @@ def playlist_details(playlist_id):
     if "user_id" not in session:
         return redirect(url_for("login"))
 
+    videos_hide_watched = db.get_preferences(session["user_id"])["videos_hide_watched"]
     saved_playlists = db.get_saved_playlist_ids(session["username"])
+
     if playlist_id in saved_playlists:
         playlist_data = db.get_playlist_data(session["username"], playlist_id)
         videos = db.get_playlist_videos(session["username"], playlist_id)
@@ -201,10 +292,18 @@ def playlist_details(playlist_id):
             "is_watched": 0
         } for video in data]
 
+    total_videos = len(videos)
+    watched_videos = len([v for v in videos if v["is_watched"]])
+    if videos_hide_watched:
+        videos = [v for v in videos if not v["is_watched"]]
+
     return render_template("playlist.html",
                            playlist=playlist_data,
                            saved_playlists=saved_playlists,
-                           videos=videos)
+                           videos=videos,
+                           watched_videos=watched_videos,
+                           total_videos=total_videos,
+                           videos_hide_watched=videos_hide_watched)
 
 @app.route("/watch_video/<video_id>", methods=["POST"])
 def watch_video(video_id):
@@ -246,6 +345,31 @@ def fetch_playlist(playlist_id):
     db.insert_or_update_videos(session["username"], videos)
 
     return jsonify({"status": "success"})
+
+@app.route("/set_preference", methods=["POST"])
+def set_preference():
+    PREFERENCES = [
+        "playlists_sort_by",
+        "playlists_per_page",
+        "playlists_hide_completed",
+        "videos_hide_watched",
+        "search_results_per_page",
+        "search_playlists_per_page",
+        "search_playlists_sort_by",
+        "search_playlists_hide_saved"
+    ]
+
+    for preference in PREFERENCES:
+        value = request.form.get(preference)
+        if value:
+            try:
+                db.set_preference(session["user_id"], preference, value)
+                return jsonify({"status": "success"})
+            except Exception as e:
+                print("Something went wrong. Message: ", e)
+                return jsonify({"status": "error"}), 500
+
+    return jsonify({"status": "error"}), 400
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)

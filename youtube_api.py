@@ -9,33 +9,50 @@ YOUTUBE_API_KEY = getenv("YOUTUBE_API_KEY")
 def get_channel_playlists(channel_id):
     playlists = []
     url = "https://www.googleapis.com/youtube/v3/playlists"
-    page_token = None
-    while True:
+
+    params = {
+        "part": "snippet",
+        "channelId": channel_id,
+        "maxResults": 50,
+        "key": YOUTUBE_API_KEY
+    }
+
+    response = requests.get(url, params=params)
+    data = response.json()
+    playlists.extend(data.get("items", []))
+    total_playlists = data.get("pageInfo").get("totalResults")
+
+    while data.get("nextPageToken", None):
         params = {
             "part": "snippet",
             "channelId": channel_id,
             "maxResults": 50,
+            "page_token": data.get("nextPageToken"),
             "key": YOUTUBE_API_KEY
         }
-        if page_token:
-            params["pageToken"] = page_token
 
         response = requests.get(url, params=params)
         data = response.json()
         playlists.extend(data.get("items", []))
 
-        page_token = data.get("nextPageToken")
-        if not page_token:
-            break
+    data = {
+        "playlists": [],
+        "total_playlists": total_playlists,
+    }
 
-    data = [{
-        "id": playlist["id"],
-        "title": playlist["snippet"]["title"],
-        "thumbnail": playlist["snippet"]["thumbnails"]["high"]["url"],
-        "channel_id": playlist["snippet"]["channelId"],
-        "channel_name": playlist["snippet"]["channelTitle"],
-        "date_created": playlist["snippet"]["publishedAt"]
-    } for playlist in playlists]
+    for playlist in playlists:
+        try:
+            data["playlists"].append({
+                "id": playlist["id"],
+                "title": playlist["snippet"]["title"],
+                "thumbnail": playlist["snippet"]["thumbnails"]["high"]["url"],
+                "channel_id": playlist["snippet"]["channelId"],
+                "channel_name": playlist["snippet"]["channelTitle"],
+                "date_created": playlist["snippet"]["publishedAt"]
+            })
+        except KeyError:
+            print(f"Playlist {playlist['id']} could not be loaded.")
+
     return data
 
 def get_playlist_data(playlist_id):
@@ -160,25 +177,31 @@ def get_videos(playlist_id):
             print(f"Video {video['id']} is private.")
     return data
 
-def search_channels(query):
-    channels = []
+def search_channels(query, page_token=None):
     url = "https://www.googleapis.com/youtube/v3/search"
     params = {
         "part": "snippet",
         "q": query,
         "type": "channel",
         "maxResults": 50,
-        "key": YOUTUBE_API_KEY
+        "pageToken": page_token,
+        "key": YOUTUBE_API_KEY,
     }
 
     response = requests.get(url, params=params)
     data = response.json()
-    channels.extend(data.get("items", []))
+    channels = data.get("items", [])
+    next_token = data.get("nextPageToken")
+    total_results = data.get("pageInfo").get("totalResults")
 
-    data = []
+    data = {
+        "channels": [],
+        "next_token": next_token,
+        "total_results": total_results
+    }
     for channel in channels:
         try:
-            data.append({
+            data["channels"].append({
                 "id": channel["id"]["channelId"],
                 "title": channel["snippet"]["title"],
                 "thumbnail": channel["snippet"]["thumbnails"]["high"]["url"]
