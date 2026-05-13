@@ -16,7 +16,7 @@
     </div>
     {% elif playlists %}
         <h2>Your {{ channel_name }}'s saved playlists</h2>
-        <p>Total playlists: {{ playlists | length }}</p>
+        <p>Total playlists: {{ total_playlists }}</p>
         <form class="preference-form" method="POST" action="/set_preference">
             <label for="playlists_sort_by">Sort by:</label>
             <select id="playlists_sort_by" name="playlists_sort_by">
@@ -24,6 +24,16 @@
                 <option value="last_watched" {% if playlists_sort_by == "last_watched" %}selected{% endif %}>Last watched</option>
                 <option value="title" {% if playlists_sort_by == "title" %}selected{% endif %}>Title</option>
                 <option value="progress" {% if playlists_sort_by == "progress" %}selected{% endif %}>Progress</option>
+            </select>
+        </form>
+        <form class="preference-form" method="POST" action="/set_preference">
+            <label for="playlists_per_page">Playlists per page:</label>
+            <select id="playlists_per_page" name="playlists_per_page">
+                <option value="10" {% if playlists_per_page == 10 %}selected{% endif %}>10</option>
+                <option value="20" {% if playlists_per_page == 20 %}selected{% endif %}>20</option>
+                <option value="30" {% if playlists_per_page == 30 %}selected{% endif %}>30</option>
+                <option value="40" {% if playlists_per_page == 40 %}selected{% endif %}>40</option>
+                <option value="50" {% if playlists_per_page == 50 %}selected{% endif %}>50</option>
             </select>
         </form>
         <label class="toggle-switch preference-toggle">
@@ -34,6 +44,21 @@
         <br />
         <button class="back-btn" onclick="history.back()">&lt; Go back</button>
         <button class="fetchall-btn" data-playlists="{{ playlists | map(attribute='id') | list | join(',') }}">Refresh all</button>
+        <div class="pagination">
+            {% if current_page > 1 %}
+                <a class="button" href="/{{ channel_id }}?page={{ current_page - 1 }}">
+                    &lt; Previous page
+                </a>
+            {% endif %}
+
+            <p>Page {{ current_page }} of {{ ceil(total_playlists / playlists_per_page) }}</p>
+
+            {% if current_page < ceil(total_playlists / playlists_per_page) %}
+                <a class="button" href="/{{ channel_id }}?page={{ current_page + 1 }}">
+                    Next page &gt;
+                </a>
+            {% endif %}
+        </div>
         <div class="grid">
             {% for playlist in playlists %}
                 {% if not playlists_hide_completed or playlist.progress < 100 %}

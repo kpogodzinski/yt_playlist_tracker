@@ -12,6 +12,7 @@ def run():
         CREATE TABLE IF NOT EXISTS preferences (
             user_id INTEGER PRIMARY KEY,
             playlists_sort_by TEXT NOT NULL DEFAULT 'date_saved',
+            playlists_per_page INTEGER NOT NULL DEFAULT 10,
             playlists_hide_completed INTEGER NOT NULL DEFAULT 0,
             videos_hide_watched INTEGER NOT NULL DEFAULT 0,
             search_results_per_page INTEGER NOT NULL DEFAULT 10,
@@ -21,6 +22,7 @@ def run():
             FOREIGN KEY(user_id) REFERENCES users(id),
             
             CHECK(playlists_sort_by IN ('date_saved', 'last_watched', 'title', 'progress')),
+            CHECK(playlists_per_page IN (10, 20, 30, 40, 50)),
             CHECK(playlists_hide_completed IN (0,1)),
             CHECK(videos_hide_watched IN (0,1)),
             CHECK(search_results_per_page IN (10, 20, 30, 40, 50)),

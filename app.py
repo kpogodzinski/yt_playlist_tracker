@@ -89,11 +89,18 @@ def channel(channel_id):
     if "user_id" not in session:
         return redirect(url_for("login"))
 
-    playlists_sort_by = db.get_preferences(session["user_id"])["playlists_sort_by"]
-    playlists_hide_completed = db.get_preferences(session["user_id"])["playlists_hide_completed"]
+    current_page = int(request.args.get("page", 1))
+    if current_page < 1:
+        current_page = 1
+
+    preferences = db.get_preferences(session["user_id"])
+    playlists_sort_by = preferences["playlists_sort_by"]
+    playlists_per_page = preferences["playlists_per_page"]
+    playlists_hide_completed = preferences["playlists_hide_completed"]
 
     playlists = db.get_saved_playlists(session["username"], channel_id)
     channel_name = db.get_channel_data(session["username"], playlists[0]["channel_id"])["name"] if playlists else None
+    total_playlists = len(playlists)
 
     if playlists_sort_by == "date_saved":
         playlists.sort(key=lambda p: p["date_saved"], reverse=True)
@@ -104,23 +111,31 @@ def channel(channel_id):
     elif playlists_sort_by == "progress":
         playlists.sort(key=lambda p: p["progress"], reverse=True)
 
+    start = (current_page - 1) * playlists_per_page
+    end = start + playlists_per_page
+    playlists = playlists[start:end]
+
     return render_template("index.html",
                            playlists=playlists,
+                           channel_id=channel_id,
                            channel_name=channel_name,
                            playlists_sort_by=playlists_sort_by,
-                           playlists_hide_completed=playlists_hide_completed)
+                           playlists_per_page=playlists_per_page,
+                           playlists_hide_completed=playlists_hide_completed,
+                           total_playlists=total_playlists,
+                           current_page=current_page)
 
 @app.route("/search")
 def search():
     if "user_id" not in session:
         return redirect(url_for("login"))
 
-    search_results_per_page = db.get_preferences(session["user_id"])["search_results_per_page"]
-
     query = request.args.get("q", "")
     current_page = int(request.args.get("page", 1))
     if current_page < 1:
         current_page = 1
+
+    search_results_per_page = db.get_preferences(session["user_id"])["search_results_per_page"]
 
     channels = []
     total_results = 0
@@ -161,13 +176,13 @@ def search_channel(channel_id):
     if "user_id" not in session:
         return redirect(url_for("login"))
 
-    search_playlists_sort_by = db.get_preferences(session["user_id"])["search_playlists_sort_by"]
-    search_playlists_per_page = db.get_preferences(session["user_id"])["search_playlists_per_page"]
-    search_playlists_hide_saved = db.get_preferences(session["user_id"])["search_playlists_hide_saved"]
-
     current_page = int(request.args.get("page", 1))
     if current_page < 1:
         current_page = 1
+
+    search_playlists_sort_by = db.get_preferences(session["user_id"])["search_playlists_sort_by"]
+    search_playlists_per_page = db.get_preferences(session["user_id"])["search_playlists_per_page"]
+    search_playlists_hide_saved = db.get_preferences(session["user_id"])["search_playlists_hide_saved"]
 
     if cache.get_playlists(channel_id) is None:
         playlists = yt.get_channel_playlists(channel_id)
@@ -319,6 +334,7 @@ def fetch_playlist(playlist_id):
 def set_preference():
     PREFERENCES = [
         "playlists_sort_by",
+        "playlists_per_page",
         "playlists_hide_completed",
         "videos_hide_watched",
         "search_results_per_page",
