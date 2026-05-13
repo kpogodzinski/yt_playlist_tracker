@@ -17,6 +17,9 @@
     {% elif playlists %}
         <h2>Your {{ channel_name }}'s saved playlists</h2>
         <p>Total playlists: {{ total_playlists }}</p>
+        {% if playlists_hide_completed %}
+            <p>Total unwatched playlists: {{ visible_playlists }}</p>
+        {% endif %}
         <form class="preference-form" method="POST" action="/set_preference">
             <label for="playlists_sort_by">Sort by:</label>
             <select id="playlists_sort_by" name="playlists_sort_by">
@@ -51,9 +54,9 @@
                 </a>
             {% endif %}
 
-            <p>Page {{ current_page }} of {{ ceil(total_playlists / playlists_per_page) }}</p>
+            <p>Page {{ current_page }} of {{ ceil(visible_playlists / playlists_per_page) }}</p>
 
-            {% if current_page < ceil(total_playlists / playlists_per_page) %}
+            {% if current_page < ceil(visible_playlists / playlists_per_page) %}
                 <a class="button" href="/{{ channel_id }}?page={{ current_page + 1 }}">
                     Next page &gt;
                 </a>
@@ -61,24 +64,22 @@
         </div>
         <div class="grid">
             {% for playlist in playlists %}
-                {% if not playlists_hide_completed or playlist.progress < 100 %}
-                    <a href="{{ url_for('playlist_details', playlist_id=playlist.id) }}" class="card-link">
-                        <div class="card">
-                            <h4>{{ playlist.title }}</h4>
-                            <img src="{{ playlist.thumbnail }}"/>
-                            <div class="progress-container">
-                                <div class="progress-bar">
-                                    <div class="progress-fill{% if playlist.progress == 100 %} complete{% endif %}"
-                                    style="width: {{ playlist.progress }}%;"></div>
-                                </div>
+                <a href="{{ url_for('playlist_details', playlist_id=playlist.id) }}" class="card-link">
+                    <div class="card">
+                        <h4>{{ playlist.title }}</h4>
+                        <img src="{{ playlist.thumbnail }}"/>
+                        <div class="progress-container">
+                            <div class="progress-bar">
+                                <div class="progress-fill{% if playlist.progress == 100 %} complete{% endif %}"
+                                style="width: {{ playlist.progress }}%;"></div>
                             </div>
-                            <button class="rm-btn"
-                                    data-id="{{ playlist.id }}">
-                                Remove
-                            </button>
                         </div>
-                    </a>
-                {% endif %}
+                        <button class="rm-btn"
+                                data-id="{{ playlist.id }}">
+                            Remove
+                        </button>
+                    </div>
+                </a>
             {% endfor %}
         </div>
     {% else %}

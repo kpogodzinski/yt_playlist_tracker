@@ -56,6 +56,9 @@
         <hr />
         <h2>{{ channel_name }}'s playlists</h2>
         <p>Total playlists: <strong>{{ total_playlists }}</strong></p>
+        {% if search_playlists_hide_saved %}
+            <p>Total unsaved playlists: <strong>{{ visible_playlists }}</strong></p>
+        {% endif %}
         <button class="back-btn" onclick="history.back()">&lt; Go back</button><br />
         <form class="preference-form" method="POST" action="/set_preference">
             <label for="search_playlists_per_page">Playlists per page:</label>
@@ -86,9 +89,9 @@
                 </a>
             {% endif %}
 
-            <p>Page {{ current_page }} of {{ ceil(total_playlists / search_playlists_per_page) }}</p>
+            <p>Page {{ current_page }} of {{ ceil(visible_playlists / search_playlists_per_page) }}</p>
 
-            {% if current_page < ceil(total_playlists / search_playlists_per_page) %}
+            {% if current_page < ceil(visible_playlists / search_playlists_per_page) %}
                 <a class="button" href="/search/{{ channel_id }}?page={{ current_page + 1 }}">
                     Next page &gt;
                 </a>
@@ -96,24 +99,22 @@
         </div>
         <div class="grid">
             {% for playlist in playlists %}
-                {% if not search_playlists_hide_saved or playlist.id not in saved_playlists %}
-                    <a href="{{ url_for('playlist_details', playlist_id=playlist.id) }}"
-                       class="card-link">
-                        <div class="card">
-                            <h4>{{ playlist.title }}</h4>
-                            <img src="{{ playlist.thumbnail }}"/>
-                            <button class="save-btn"
-                                    data-id="{{ playlist.id }}"
-                                    {% if playlist.id in saved_playlists %} disabled {% endif %}>
-                                {% if playlist.id in saved_playlists %}
-                                    Saved!
-                                {% else %}
-                                    Save
-                                {% endif %}
-                            </button>
-                        </div>
-                    </a>
-                {% endif %}
+                <a href="{{ url_for('playlist_details', playlist_id=playlist.id) }}"
+                   class="card-link">
+                    <div class="card">
+                        <h4>{{ playlist.title }}</h4>
+                        <img src="{{ playlist.thumbnail }}"/>
+                        <button class="save-btn"
+                                data-id="{{ playlist.id }}"
+                                {% if playlist.id in saved_playlists %} disabled {% endif %}>
+                            {% if playlist.id in saved_playlists %}
+                                Saved!
+                            {% else %}
+                                Save
+                            {% endif %}
+                        </button>
+                    </div>
+                </a>
             {% endfor %}
         </div>
     {% endif %}

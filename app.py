@@ -100,7 +100,11 @@ def channel(channel_id):
 
     playlists = db.get_saved_playlists(session["username"], channel_id)
     channel_name = db.get_channel_data(session["username"], playlists[0]["channel_id"])["name"] if playlists else None
+
     total_playlists = len(playlists)
+    if playlists_hide_completed:
+        playlists = [p for p in playlists if p["progress"] < 100]
+    visible_playlists = len(playlists)
 
     if playlists_sort_by == "date_saved":
         playlists.sort(key=lambda p: p["date_saved"], reverse=True)
@@ -123,6 +127,7 @@ def channel(channel_id):
                            playlists_per_page=playlists_per_page,
                            playlists_hide_completed=playlists_hide_completed,
                            total_playlists=total_playlists,
+                           visible_playlists=visible_playlists,
                            current_page=current_page)
 
 @app.route("/search")
@@ -191,6 +196,12 @@ def search_channel(channel_id):
     playlists = cache.get_playlists(channel_id)
     total_playlists = playlists["total_playlists"]
     playlists = playlists["playlists"]
+    channel_name = playlists[0]["channel_name"] if playlists else None
+
+    saved_playlists = db.get_saved_playlist_ids(session["username"])
+    if search_playlists_hide_saved:
+        playlists = [p for p in playlists if p["id"] not in saved_playlists]
+    visible_playlists = len(playlists)
 
     if search_playlists_sort_by == "title":
         playlists.sort(key=lambda p: p["title"].lower())
@@ -200,9 +211,6 @@ def search_channel(channel_id):
     start = (current_page - 1) * search_playlists_per_page
     end = start + search_playlists_per_page
     playlists = playlists[start:end]
-
-    saved_playlists = db.get_saved_playlist_ids(session["username"])
-    channel_name = playlists[0]["channel_name"] if playlists else None
 
     if not playlists:
         playlists = "empty"
@@ -216,6 +224,7 @@ def search_channel(channel_id):
                            search_playlists_per_page=search_playlists_per_page,
                            search_playlists_hide_saved=search_playlists_hide_saved,
                            total_playlists=total_playlists,
+                           visible_playlists=visible_playlists,
                            current_page=current_page)
 
 @app.route("/save_playlist/<playlist_id>", methods=["POST"])

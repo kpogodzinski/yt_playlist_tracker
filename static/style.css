@@ -50,7 +50,7 @@ nav a.active {
     color: black;
 }
 
-form, .pagination{
+form {
     margin: 8px 0;
 }
 
@@ -146,9 +146,13 @@ form button, form select, .pagination a.button {
     font-weight: bold;
 }
 
+.pagination {
+    margin-top: 16px;
+}
+
 .pagination p {
     display: inline-block;
-    margin: 8px;
+    margin: 16px 8px;
 }
 
 .pagination a.button {
