@@ -9,13 +9,13 @@ The application uses the YouTube Data API to fetch channels, playlists and video
 ## Features
 
 - Create a personal user account
-- Search for YouTube channels by name
+- Search for YouTube channels
 - Browse and save playlists from channels
 - Refresh playlists to update their content
 - Sort saved playlists by title, progress, date saved, or last watched
-- Hide completed playlists and watched videos
-- Track progress of watched videos within playlists
 - Mark videos as watched or not watched
+- Track progress of watched videos within playlists
+- Hide completed playlists and watched videos
   
 ## Requirements
 
@@ -27,7 +27,7 @@ The application uses the YouTube Data API to fetch channels, playlists and video
 
 ## Database
 
-The application uses a lightweight SQLite database to store user accounts, saved playlists, and video watching progress.
+The application uses a lightweight SQLite database to store user accounts, user preferences, saved playlists, and video watching progress.
 
 The _users_ database file is created automatically on first run. Each user has their own database which is created automatically upon registration.
 
@@ -80,8 +80,6 @@ Create an `.env` file based on the `.env_example` and fill in required environme
 - `SECRET_KEY` – used by Flask to sign and secure sessions.
 - `YOUTUBE_API_KEY` – used in YouTube API requests.
 
-> :warning: **IMPORTANT: Do not share any of your keys!**
-
 ### Generating Flask secret key
 This simple Python script generates a random 32-byte hexadecimal token that you can use as your secret key.
 
@@ -92,7 +90,7 @@ secrets.token_hex(32)
 
 ### Generating YouTube API key
 
-Follow the steps from Google’s official guide to obtain an API key for your app. You can find it [here](https://developers.google.com/youtube/v3/getting-started#before-you-start).
+Follow the steps from Google’s official guide to obtain a YouTube API key for your app. You can find it [here](https://developers.google.com/youtube/v3/getting-started#before-you-start).
 
 > :warning: **IMPORTANT: Do not share any of your keys!**
 
@@ -140,5 +138,3 @@ http://<ip_address>:5000/
 **Step 2:** Make sure you have activated Python's virtual environment. Then, run the migrations by executing the `run_migrations.py` script. **This is a mandatory step** to ensure your database is compatible with the latest schema.
 
 **Step 3:** If the script completes with no errors, your databases are up to date. You can start the server now.
-
-> :warning: **IMPORTANT: Always make a backup of your databases! There shouldn't be any problems, but I am not responsible for any data loss.**
