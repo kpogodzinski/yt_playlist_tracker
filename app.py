@@ -99,6 +99,7 @@ def channel(channel_id):
     playlists_hide_completed = preferences["playlists_hide_completed"]
 
     playlists = db.get_saved_playlists(session["username"], channel_id)
+    all_playlist_ids = [p["id"] for p in playlists]
     channel_name = db.get_channel_data(session["username"], playlists[0]["channel_id"])["name"] if playlists else None
 
     total_playlists = len(playlists)
@@ -121,6 +122,7 @@ def channel(channel_id):
 
     return render_template("index.html",
                            playlists=playlists,
+                           all_playlist_ids=all_playlist_ids,
                            channel_id=channel_id,
                            channel_name=channel_name,
                            playlists_sort_by=playlists_sort_by,

@@ -46,7 +46,7 @@
         </label>
         <br />
         <button class="back-btn" onclick="history.back()">&lt; Go back</button>
-        <button class="fetchall-btn" data-playlists="{{ playlists | map(attribute='id') | list | join(',') }}">Refresh all</button>
+        <button class="fetchall-btn" data-playlists="{{ all_playlist_ids | list | join(',') }}">Refresh all</button>
         <div class="pagination">
             {% if current_page > 1 %}
                 <a class="button" href="/{{ channel_id }}?page={{ current_page - 1 }}">
