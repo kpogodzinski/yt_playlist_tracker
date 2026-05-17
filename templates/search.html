@@ -2,7 +2,7 @@
 
 {% block content %}
     <h2>Search for a channel</h2>
-    <form method="GET" action="/search">
+    <form id="searchForm" method="GET" action="/search">
         <label>
             <input type="text" name="q" placeholder="Enter a channel name" value="{{ query }}"/>
         </label>

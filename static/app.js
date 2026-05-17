@@ -228,6 +228,17 @@ document.querySelectorAll(".preference-toggle input[type='checkbox']").forEach(c
     })
 })
 
+/// SHOW LOADER WHEN SUBMITTING HTML FORMS
+document.addEventListener("DOMContentLoaded", () => {
+    const currentForm = document.querySelector("#loginForm, #registerForm, #searchForm")
+
+    if (currentForm) {
+        currentForm.addEventListener("submit", () => {
+            LOADER.style.display = "flex";
+        })
+    }
+})
+
 /// HIDE LOADER WHEN USING BACK BUTTON
 window.addEventListener("pageshow", event => {
     if (event.persisted) {
