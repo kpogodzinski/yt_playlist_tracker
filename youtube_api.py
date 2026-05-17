@@ -90,7 +90,7 @@ def get_channel_data(channel_id):
     }
     return data
 
-def __get_videos_durations_and_dates__(ids):
+def _get_videos_durations_and_dates(ids):
     url = "https://www.googleapis.com/youtube/v3/videos/"
     params = {
         "part": "snippet,contentDetails",
@@ -108,7 +108,7 @@ def __get_videos_durations_and_dates__(ids):
 
     return video_durations, video_dates
 
-def __parse_duration__(duration):
+def _parse_duration(duration):
     pattern = re.compile(r"PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?")
     match = pattern.match(duration)
     if not match:
@@ -124,10 +124,10 @@ def __parse_duration__(duration):
     else:
         return f"{m:02}:{s:02}"
 
-def __batch__(iterable, n=50):
+def _batch(iterable, n=50):
     it = iter(iterable)
-    while __batch__ := list(islice(it, n)):
-        yield __batch__
+    while batch := list(islice(it, n)):
+        yield batch
 
 def get_videos(playlist_id):
     videos = []
@@ -154,9 +154,9 @@ def get_videos(playlist_id):
     video_ids = [v["snippet"]["resourceId"]["videoId"] for v in videos]
     video_durations = {}
     video_dates = {}
-    for batch_ids in __batch__(video_ids, 50):
+    for batch_ids in _batch(video_ids, 50):
         ids = ",".join(batch_ids)
-        dur, dat = __get_videos_durations_and_dates__(ids)
+        dur, dat = _get_videos_durations_and_dates(ids)
         video_durations.update(dur)
         video_dates.update(dat)
 
@@ -170,7 +170,7 @@ def get_videos(playlist_id):
                 "position": video["snippet"]["position"],
                 "title": video["snippet"]["title"],
                 "thumbnail": video["snippet"]["thumbnails"]["high"]["url"],
-                "duration": __parse_duration__(video_durations[vid]),
+                "duration": _parse_duration(video_durations[vid]),
                 "published": (datetime.fromisoformat(video_dates[vid].replace("Z", "+00:00"))).strftime("%d %B %Y")
             })
         except KeyError:

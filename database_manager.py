@@ -26,7 +26,7 @@ def register_user(username, password):
                        (username,))
     except sqlite3.OperationalError as e:
         if "no such table" in str(e):
-            __create_users_db__()
+            _create_users_db()
             cursor.execute("INSERT INTO users (username, password) VALUES (?, ?)",
                            (username, password_hash))
             cursor.execute("INSERT INTO preferences (user_id) SELECT id FROM users WHERE username = ?",
@@ -37,7 +37,7 @@ def register_user(username, password):
     conn.commit()
     conn.close()
 
-    __create_user_tables__(username)
+    _create_user_tables(username)
 
 def login_user(username, password):
     if not os.path.exists("databases"):
@@ -49,7 +49,7 @@ def login_user(username, password):
         cursor.execute("SELECT * FROM users WHERE username = (?)", (username,))
     except sqlite3.OperationalError as e:
         if "no such table" in str(e):
-            __create_users_db__()
+            _create_users_db()
             cursor.execute("SELECT * FROM users WHERE username = (?)", (username,))
         else:
             raise
@@ -78,7 +78,7 @@ def set_preference(user_id, preference, value):
     conn.commit()
     conn.close()
 
-def __create_users_db__():
+def _create_users_db():
     conn, cursor = db_connect("users")
     cursor.execute("""
                     CREATE TABLE users (
@@ -114,7 +114,7 @@ def __create_users_db__():
     conn.commit()
     conn.close()
 
-def __create_user_tables__(username):
+def _create_user_tables(username):
     conn, cursor = db_connect(username)
     cursor.execute("""
                     CREATE TABLE channels (

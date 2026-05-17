@@ -11,9 +11,15 @@
         {% endif %}
     {% endwith %}
     <form id="register" method="POST" autocorrect="off" spellcheck="false" autocapitalize="off">
-        <input type="text" name="username" autocomplete="username" placeholder="Username" required><br />
-        <input type="password" name="password" autocomplete="new-password" placeholder="Password" required><br />
-        <input type="password" name="password_repeated" autocomplete="new-password" placeholder="Repeat password" required><br />
+        <label>
+            <input type="text" name="username" autocomplete="username" placeholder="Username" required>
+        </label><br />
+        <label>
+            <input type="password" name="password" autocomplete="new-password" placeholder="Password" required>
+        </label><br />
+        <label>
+            <input type="password" name="password_repeated" autocomplete="new-password" placeholder="Repeat password" required>
+        </label><br />
         <button type="submit">Register</button>
     </form>
     <p>Already have an account? <a href="{{ url_for('login') }}">Log in</a></p>

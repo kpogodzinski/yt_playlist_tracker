@@ -3,7 +3,9 @@
 {% block content %}
     <h2>Search for a channel</h2>
     <form method="GET" action="/search">
-        <input type="text" name="q" placeholder="Enter a channel name" value="{{ query }}"/>
+        <label>
+            <input type="text" name="q" placeholder="Enter a channel name" value="{{ query }}"/>
+        </label>
         <button type="submit">Search</button>
     </form>
     <br />
@@ -42,7 +44,7 @@
                    class="card-link">
                     <div class="card">
                         <h4>{{ channel.title }}</h4>
-                        <img src="{{ channel.thumbnail }}"/>
+                        <img src="{{ channel.thumbnail }}" alt="Channel Thumbnail" />
                     </div>
                 </a>
             {% endfor %}
@@ -103,7 +105,7 @@
                    class="card-link">
                     <div class="card">
                         <h4>{{ playlist.title }}</h4>
-                        <img src="{{ playlist.thumbnail }}"/>
+                        <img src="{{ playlist.thumbnail }}" alt="Playlist Thumbnail" />
                         <button class="save-btn"
                                 data-id="{{ playlist.id }}"
                                 {% if playlist.id in saved_playlists %} disabled {% endif %}>

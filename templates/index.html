@@ -9,7 +9,7 @@
             <a href="{{ url_for('channel', channel_id=channel.id) }}" class="card-link">
                 <div class="card">
                     <h4>{{ channel.name }}</h4>
-                    <img src="{{ channel.thumbnail }}"/>
+                    <img src="{{ channel.thumbnail }}" alt="Channel Thumbnail" />
                 </div>
             </a>
         {% endfor %}
@@ -67,7 +67,7 @@
                 <a href="{{ url_for('playlist_details', playlist_id=playlist.id) }}" class="card-link">
                     <div class="card">
                         <h4>{{ playlist.title }}</h4>
-                        <img src="{{ playlist.thumbnail }}"/>
+                        <img src="{{ playlist.thumbnail }}" alt="Playlist Thumbnail" />
                         <div class="progress-container">
                             <div class="progress-bar">
                                 <div class="progress-fill{% if playlist.progress == 100 %} complete{% endif %}"
