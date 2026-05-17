@@ -1,3 +1,5 @@
+const LOADER = document.getElementById("loader-wrapper")
+
 document.querySelectorAll(".save-btn").forEach(button => {
     button.addEventListener("click", (event) => {
         event.preventDefault();
@@ -5,6 +7,7 @@ document.querySelectorAll(".save-btn").forEach(button => {
 
         const playlistId = button.dataset.id
 
+        LOADER.style.display = "flex";
         button.textContent = "Saving...";
 
         fetch(`/save_playlist/${playlistId}`, { method: "POST" })
@@ -18,7 +21,10 @@ document.querySelectorAll(".save-btn").forEach(button => {
                 button.disabled = true;
             }
         })
-        .catch(err => console.error(err));
+        .catch(err => console.error(err))
+        .finally(() => {
+            LOADER.style.display = "none";
+        })
     });
 });
 
@@ -32,6 +38,7 @@ document.querySelectorAll(".rm-btn").forEach(button => {
 
         const playlistId = button.dataset.id
 
+        LOADER.style.display = "flex";
         button.textContent = "Removing...";
 
         fetch(`/remove_playlist/${playlistId}`, { method: "POST" })
@@ -44,7 +51,10 @@ document.querySelectorAll(".rm-btn").forEach(button => {
                 button.textContent = "Error";
             }
         })
-        .catch(err => console.error(err));
+        .catch(err => console.error(err))
+        .finally(() => {
+            LOADER.style.display = "none";
+        })
     });
 });
 
@@ -53,8 +63,9 @@ document.querySelectorAll(".watch-btn").forEach(button => {
         event.preventDefault();
         event.stopPropagation();
 
-        const videoId = button.dataset.video
+        const videoId = button.dataset.video;
 
+        LOADER.style.display = "flex";
         button.textContent = "Please wait...";
 
         fetch(`/watch_video/${videoId}`, { method: "POST" })
@@ -73,7 +84,10 @@ document.querySelectorAll(".watch-btn").forEach(button => {
             }
 
         })
-        .catch(err => console.error(err));
+        .catch(err => console.error(err))
+        .finally(() => {
+            LOADER.style.display = "none";
+        })
     });
 });
 
@@ -84,31 +98,35 @@ document.querySelectorAll(".watchall-btn").forEach(button => {
 
         const playlistId = button.dataset.playlist
 
+        LOADER.style.display = "flex";
         button.textContent = "Please wait..."
 
         fetch(`/playlist/${playlistId}/watch_all`, {method: "POST"})
-            .then(response => response.json())
-            .then(data => {
-                if (data.status === "watched") {
-                    document.querySelectorAll(".watch-btn").forEach(button => {
-                        button.classList.add("watched")
-                        button.textContent = "Watched";
-                    })
-                    button.textContent = "Unwatch all"
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === "watched") {
+                document.querySelectorAll(".watch-btn").forEach(button => {
                     button.classList.add("watched")
-                } else if (data.status === "unwatched") {
-                    document.querySelectorAll(".watch-btn").forEach(button => {
-                        button.classList.remove("watched")
-                        button.textContent = "Not watched";
-                    })
-                    button.textContent = "Watch all"
+                    button.textContent = "Watched";
+                })
+                button.textContent = "Unwatch all"
+                button.classList.add("watched")
+            } else if (data.status === "unwatched") {
+                document.querySelectorAll(".watch-btn").forEach(button => {
                     button.classList.remove("watched")
-                } else if (data.status === "not saved") {
-                    button.textContent = "Save the playlist first!"
-                } else {
-                    button.textContent = "Error"
-                }
-            })
+                    button.textContent = "Not watched";
+                })
+                button.textContent = "Watch all"
+                button.classList.remove("watched")
+            } else if (data.status === "not saved") {
+                button.textContent = "Save the playlist first!"
+            } else {
+                button.textContent = "Error"
+            }
+        })
+        .finally(() => {
+            LOADER.style.display = "none";
+        })
     })
 });
 
@@ -116,17 +134,21 @@ document.querySelectorAll(".fetch-btn").forEach(button => {
     button.addEventListener("click", () => {
         const playlistId = button.dataset.playlist
 
+        LOADER.style.display = "flex";
         button.disabled = true;
         button.textContent = "Refreshing..."
 
         fetch(`/fetch_playlist/${playlistId}`, {method: "POST"})
-            .then(response => response.json())
-            .then(data => {
-                if (data.status === "success") {
-                    button.textContent = "Refreshed!"
-                    button.disabled = false
-                }
-            })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === "success") {
+                button.textContent = "Refreshed!"
+                button.disabled = false
+            }
+        })
+        .finally(() => {
+            LOADER.style.display = "none";
+        })
     })
 });
 
@@ -136,6 +158,7 @@ document.querySelectorAll(".fetchall-btn").forEach(button => {
         const total = playlists.length
         if (total < 1) return
 
+        LOADER.style.display = "flex";
         button.disabled = true
         button.textContent = "Refreshing..."
 
@@ -151,6 +174,7 @@ document.querySelectorAll(".fetchall-btn").forEach(button => {
 
         button.textContent = "Refreshed!"
         button.disabled = false
+        LOADER.style.display = "none";
     })
 });
 
@@ -158,6 +182,7 @@ document.querySelectorAll(".preference-form select").forEach(select => {
     select.addEventListener("change", () => {
         const form = select.closest("form");
 
+        LOADER.style.display = "flex";
         const body = new FormData(form)
         select.disabled = true;
 
@@ -172,6 +197,9 @@ document.querySelectorAll(".preference-form select").forEach(select => {
                 console.error("[JS] Something went wrong.")
             }
         })
+        .finally(() => {
+            LOADER.style.display = "none";
+        })
     })
 })
 
@@ -180,7 +208,9 @@ document.querySelectorAll(".preference-toggle input[type='checkbox']").forEach(c
         const body = new FormData();
         body.append(checkbox.name, checkbox.checked ? "1" : "0");
 
+        LOADER.style.display = "flex";
         checkbox.disabled = true;
+
         fetch("/set_preference", { method: "POST", body: body })
         .then(response => response.json())
         .then(data => {
@@ -192,12 +222,23 @@ document.querySelectorAll(".preference-toggle input[type='checkbox']").forEach(c
                 console.error("[JS] Something went wrong.")
             }
         })
+        .finally(() => {
+            LOADER.style.display = "none";
+        })
     })
 })
+
+/// HIDE LOADER WHEN USING BACK BUTTON
+window.addEventListener("pageshow", event => {
+    if (event.persisted) {
+        LOADER.style.display = "none";
+    }
+});
 
 /// FOR APPLE IOS SAFARI STANDALONE APP
 document.querySelectorAll("a").forEach(a => {
     a.addEventListener("click", e => {
+        LOADER.style.display = "flex";
         if (window.navigator.standalone && a.hostname === location.hostname) {
             e.preventDefault();
             window.location.href = a.href;
