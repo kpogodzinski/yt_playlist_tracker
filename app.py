@@ -343,6 +343,9 @@ def watch_all(playlist_id):
 
 @app.route("/fetch_playlist/<playlist_id>", methods=["POST"])
 def fetch_playlist(playlist_id):
+    if "user_id" not in session:
+        return redirect(url_for("login"))
+
     videos = yt.get_videos(playlist_id)
     db.insert_or_update_videos(session["username"], videos)
 
@@ -350,6 +353,9 @@ def fetch_playlist(playlist_id):
 
 @app.route("/set_preference", methods=["POST"])
 def set_preference():
+    if "user_id" not in session:
+        return redirect(url_for("login"))
+
     PREFERENCES = [
         "playlists_sort_by",
         "playlists_per_page",

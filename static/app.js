@@ -21,7 +21,10 @@ document.querySelectorAll(".save-btn").forEach(button => {
                 button.disabled = true;
             }
         })
-        .catch(err => console.error(err))
+        .catch(err => {
+            console.error(err);
+            window.location.reload();
+        })
         .finally(() => {
             LOADER.style.display = "none";
         })
@@ -51,7 +54,10 @@ document.querySelectorAll(".rm-btn").forEach(button => {
                 button.textContent = "Error";
             }
         })
-        .catch(err => console.error(err))
+        .catch(err => {
+            console.error(err);
+            window.location.reload();
+        })
         .finally(() => {
             LOADER.style.display = "none";
         })
@@ -84,7 +90,10 @@ document.querySelectorAll(".watch-btn").forEach(button => {
             }
 
         })
-        .catch(err => console.error(err))
+        .catch(err => {
+            console.error(err);
+            window.location.reload();
+        })
         .finally(() => {
             LOADER.style.display = "none";
         })
@@ -124,6 +133,10 @@ document.querySelectorAll(".watchall-btn").forEach(button => {
                 button.textContent = "Error"
             }
         })
+        .catch(err => {
+            console.error(err);
+            window.location.reload();
+        })
         .finally(() => {
             LOADER.style.display = "none";
         })
@@ -146,6 +159,10 @@ document.querySelectorAll(".fetch-btn").forEach(button => {
                 button.disabled = false
             }
         })
+        .catch(err => {
+            console.error(err);
+            window.location.reload();
+        })
         .finally(() => {
             LOADER.style.display = "none";
         })
@@ -162,14 +179,24 @@ document.querySelectorAll(".fetchall-btn").forEach(button => {
         button.disabled = true
         button.textContent = "Refreshing..."
 
-        let done = 0
+        let current = 1
         for (const id of playlists) {
-            const response = await fetch(`/fetch_playlist/${id}`, { method: "POST" })
-            const data = await response.json()
-            if (data.status === "success") {
-                    done += 1
-                    button.textContent = `Refreshing... (${done}/${total})`
+            try {
+                const response = await fetch(`/fetch_playlist/${id}`, { method: "POST" })
+
+                const data = await response.json()
+                if (data.status === "success") {
+                    current += 1
+                    button.textContent = `Refreshing... (${current}/${total})`
                 }
+                else {
+                    console.log(data);
+                }
+            }
+            catch (err) {
+                console.error(err);
+                window.location.reload();
+            }
         }
 
         button.textContent = "Refreshed!"
@@ -191,11 +218,15 @@ document.querySelectorAll(".preference-form select").forEach(select => {
         .then(data => {
             select.disabled = false;
             if (data.status === "success") {
-                location.reload()
+                window.location.reload()
             }
             else if (data.status === "error") {
-                console.error("[JS] Something went wrong.")
+                console.error("Something went wrong.")
             }
+        })
+        .catch(err => {
+            console.error(err);
+            window.location.reload();
         })
         .finally(() => {
             LOADER.style.display = "none";
@@ -216,11 +247,15 @@ document.querySelectorAll(".preference-toggle input[type='checkbox']").forEach(c
         .then(data => {
             checkbox.disabled = false;
             if (data.status === "success") {
-                location.reload()
+                window.location.reload()
             }
             else if (data.status === "error") {
-                console.error("[JS] Something went wrong.")
+                console.error("Something went wrong.")
             }
+        })
+        .catch(err => {
+            console.error(err);
+            window.location.reload();
         })
         .finally(() => {
             LOADER.style.display = "none";
