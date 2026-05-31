@@ -62,6 +62,25 @@ def login_user(username, password):
     else:
         return None
 
+def change_password(username, current_password, new_password):
+    conn, cursor = db_connect("users")
+
+    cursor.execute("SELECT password FROM users WHERE username = ?", (username,))
+    user = cursor.fetchone()
+
+    if not check_password_hash(user[0], current_password):
+        return "invalid"
+
+    try:
+        new_hash = generate_password_hash(new_password)
+        cursor.execute("UPDATE users SET password=? WHERE username=?", (new_hash, username))
+    except sqlite3.Error:
+        return "error"
+
+    conn.commit()
+    conn.close()
+    return "success"
+
 def get_preferences(user_id):
     conn, cursor = db_connect("users")
     row = cursor.execute("SELECT * FROM preferences WHERE user_id = (?)", (user_id,)).fetchone()

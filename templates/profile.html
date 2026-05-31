@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+
+{% block content %}
+    {% set messages = get_flashed_messages(with_categories=true) %}
+    <h2>Profile details</h2>
+    {% if messages %}
+        {% for category, message in messages %}
+            {% set subcat = category.split(' ') %}
+            {% if subcat[1] == "profile" %}
+                <div class="alert alert-{{ subcat[0] }}" id="flash-msg">
+                    {{ message }}
+                </div>
+            {% endif %}
+        {% endfor %}
+    {% endif %}
+    <form id="profileForm" method="POST" autocorrect="off" spellcheck="false" autocapitalize="off">
+        <label>
+            Username:
+            <input type="text" name="username" value="{{ username }}" title="Username cannot be changed." disabled>
+        </label><br />
+        <label>
+            Full name:
+            <input type="text" name="fullname" value="{{ fullname }}">
+        </label><br />
+        <input type="hidden" name="form_id" value="profileForm" />
+        <button type="submit">Save changes</button>
+    </form>
+    <br /><hr />
+
+    <h2>Change password</h2>
+    {% if messages %}
+        {% for category, message in messages %}
+            {% set subcat = category.split(' ') %}
+            {% if subcat[1] == "password" %}
+                <div class="alert alert-{{ subcat[0] }}" id="flash-msg">
+                    {{ message }}
+                </div>
+            {% endif %}
+        {% endfor %}
+    {% endif %}
+    <form id="changePasswordForm" method="POST" autocorrect="off" spellcheck="false" autocapitalize="off">
+        <label>
+            Current password:
+            <input type="password" name="current_password" autocomplete="current-password" required>
+        </label><br />
+        <label>
+            New password:
+            <input type="password" name="new_password" autocomplete="new-password" required>
+        </label><br />
+        <label>
+            Repeat new password:
+            <input type="password" name="repeat_new_password" autocomplete="new-password" required>
+        </label><br />
+        <input type="hidden" name="form_id" value="changePasswordForm" />
+        <button type="submit">Change password</button>
+    </form>
+    <br /><hr />
+
+    <h2>Danger zone</h2>
+    <button class="del-btn">Delete account</button>
+{% endblock %}

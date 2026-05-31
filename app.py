@@ -84,6 +84,40 @@ def home():
 
     return render_template("index.html", channels=channels)
 
+@app.route("/profile", methods=["GET", "POST"])
+def profile():
+    if "user_id" not in session:
+        return redirect(url_for("login"))
+
+    username = session["username"]
+    # fullname =
+
+    if request.method == "POST":
+        if request.form["form_id"] == "profileForm":
+            flash("Testing success flash message.", "success profile")
+            flash("Testing warning flash message.", "warning profile")
+            flash("Testing error flash message.", "error profile")
+
+        elif request.form["form_id"] == "changePasswordForm":
+            current_password = request.form["current_password"]
+            new_password = request.form["new_password"]
+            repeat_new_password = request.form["repeat_new_password"]
+
+            if new_password != repeat_new_password:
+                flash("Passwords don't match!", "error password")
+                return redirect(url_for("profile"))
+
+            status = db.change_password(username, current_password, new_password)
+            if status == "invalid":
+                flash("Invalid current password!", "error password")
+            elif status == "error":
+                flash("Something went wrong.", "error password")
+            else:
+                flash("Password changed successfully.", "success password")
+            return redirect(url_for("profile"))
+
+    return render_template("profile.html", username=username)
+
 @app.route("/<channel_id>")
 def channel(channel_id):
     if "user_id" not in session:

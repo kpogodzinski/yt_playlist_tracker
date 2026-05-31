@@ -227,18 +227,18 @@ button.save-btn:disabled {
     cursor: not-allowed;
 }
 
-button.rm-btn {
+button.rm-btn, button.del-btn {
     background-color: inherit;
     color: #cd0000;
     border-color: #cd0000;
 }
 
-button.rm-btn:hover {
+button.rm-btn:hover, button.del-btn:hover {
     background-color: #2e2e2e;
     transform: translateY(-2px);
 }
 
-button.rm-btn:disabled {
+button.rm-btn:disabled, button.del-btn:disabled {
     background-color: #cd0000;
     color: white;
     cursor: not-allowed;
