@@ -105,7 +105,10 @@
                    class="card-link">
                     <div class="card">
                         <h4>{{ playlist.title }}</h4>
-                        <img src="{{ playlist.thumbnail }}" alt="Playlist Thumbnail" />
+                        <div class="thumb">
+                            <img src="{{ playlist.thumbnail }}" alt="Playlist Thumbnail" />
+                            <p class="count">{{ playlist.count }} video{% if playlist.count != 1 %}s{% endif %}</p>
+                        </div>
                         <button class="save-btn"
                                 data-id="{{ playlist.id }}"
                                 {% if playlist.id in saved_playlists %} disabled {% endif %}>

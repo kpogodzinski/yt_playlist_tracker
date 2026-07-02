@@ -11,7 +11,7 @@ def get_channel_playlists(channel_id):
     url = "https://www.googleapis.com/youtube/v3/playlists"
 
     params = {
-        "part": "snippet",
+        "part": "snippet,contentDetails",
         "channelId": channel_id,
         "maxResults": 50,
         "key": YOUTUBE_API_KEY
@@ -24,7 +24,7 @@ def get_channel_playlists(channel_id):
 
     while data.get("nextPageToken", None):
         params = {
-            "part": "snippet",
+            "part": "snippet,contentDetails",
             "channelId": channel_id,
             "maxResults": 50,
             "page_token": data.get("nextPageToken"),
@@ -48,7 +48,8 @@ def get_channel_playlists(channel_id):
                 "thumbnail": playlist["snippet"]["thumbnails"]["high"]["url"],
                 "channel_id": playlist["snippet"]["channelId"],
                 "channel_name": playlist["snippet"]["channelTitle"],
-                "date_created": playlist["snippet"]["publishedAt"]
+                "date_created": playlist["snippet"]["publishedAt"],
+                "count": playlist["contentDetails"]["itemCount"]
             })
         except KeyError:
             print(f"Playlist {playlist['id']} could not be loaded.")
@@ -69,7 +70,7 @@ def get_playlist_data(playlist_id):
         "playlist_id": playlist_id,
         "channel_id": snippet.get("channelId"),
         "title": snippet.get("title"),
-        "thumbnail": snippet.get("thumbnails").get("high").get("url")
+        "thumbnail": snippet.get("thumbnails").get("high").get("url"),
     }
     return data
 

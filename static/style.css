@@ -163,7 +163,7 @@ form button, form select, .pagination a.button {
     margin-bottom: 10px;
 }
 
-.thumb .duration {
+.thumb .duration, .thumb .count {
     position: absolute;
     bottom: 6px;
     right: 6px;

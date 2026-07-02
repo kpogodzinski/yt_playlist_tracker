@@ -294,6 +294,7 @@ def save_playlist(playlist_id):
     status = "success"
     try:
         db.save_playlist(session["username"], playlist_id, data["channel_id"], data["title"], data["thumbnail"])
+        db.update_playlist_count(session["username"], playlist_id)
     except sqlite3.IntegrityError:
         status = "exists"
 
@@ -397,6 +398,7 @@ def fetch_playlist(playlist_id):
 
     videos = yt.get_videos(playlist_id)
     db.insert_or_update_videos(session["username"], videos)
+    db.update_playlist_count(session["username"], playlist_id)
 
     return jsonify({"status": "success"})
 

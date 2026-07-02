@@ -186,6 +186,7 @@ def _create_user_tables(username):
                     thumbnail TEXT,
                     date_saved TEXT DEFAULT current_timestamp,
                     last_watched TEXT DEFAULT '1970-01-01',
+                    count INTEGER,
                     progress INTEGER DEFAULT 0,
                     FOREIGN KEY(channel_id) REFERENCES channels(id) ON DELETE RESTRICT
                 );
@@ -317,6 +318,19 @@ def get_saved_playlist_ids(username):
     rows = cursor.execute("SELECT id FROM playlists").fetchall()
     conn.close()
     return {row["id"] for row in rows}
+
+def update_playlist_count(username, playlist_id):
+    conn, cursor = db_connect(username)
+    try:
+        cursor.execute("SELECT COUNT(*) FROM videos WHERE playlist_id = ?", (playlist_id,))
+        count = cursor.fetchone()[0]
+        cursor.execute("UPDATE playlists SET count = ? WHERE id = ?", (count, playlist_id))
+        conn.commit()
+        return "success"
+    except sqlite3.Error:
+        return "error"
+    finally:
+        conn.close()
 
 def remove_playlist(username, playlist_id):
     conn, cursor = db_connect(username)
