@@ -2,6 +2,7 @@
 
 {% block content %}
     {% if channels %}
+        <h1>Hello, {{ display_name }}!</h1>
         <h2>Your saved channels</h2>
         <p>Total channels: {{ channels | length }}</p>
         <div class="grid">
@@ -74,7 +75,7 @@
                                 style="width: {{ playlist.progress }}%;"></div>
                             </div>
                         </div>
-                        <button class="rm-btn"
+                        <button class="rm-btn danger-btn"
                                 data-id="{{ playlist.id }}">
                             Remove
                         </button>

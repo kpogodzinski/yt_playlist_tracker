@@ -263,16 +263,71 @@ document.querySelectorAll(".preference-toggle input[type='checkbox']").forEach(c
     })
 })
 
-/// SHOW LOADER WHEN SUBMITTING HTML FORMS
-document.addEventListener("DOMContentLoaded", () => {
-    const currentForm = document.querySelector("#loginForm, #registerForm, #searchForm")
+document.querySelectorAll(".del-acc-btn").forEach(button => {
+    button.addEventListener("click", () => {
+        const confirmed = confirm("All your data will be permanently deleted. Are you sure?");
+        if (!confirmed) return;
 
-    if (currentForm) {
-        currentForm.addEventListener("submit", () => {
-            LOADER.style.display = "flex";
-        })
-    }
+        document.getElementById("delete-account-button").style.display = "none"
+        document.getElementById("delete-modal").style.display = "block";
+
+        window.location.href = "/profile#delete-modal";
+
+        document.getElementById("confirm-delete").onclick = () => {
+            const password = document.getElementById("delete-password").value;
+            if (!password) {
+                LOADER.style.display = "none";
+                return;
+            }
+
+            fetch("/delete_account", {
+                method: "DELETE",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    password: password
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === "success") {
+                    alert("Your account has been deleted.");
+                    window.location.href = "/login";
+                } else if (data.status === "wrong_password") {
+                    alert("Incorrect password.")
+                    window.location.reload()
+                } else {
+                    alert("Something went wrong.")
+                    window.location.reload()
+                }
+            })
+        }
+    })
 })
+
+/// SHOW LOADER WHEN SUBMITTING HTML FORMS AND CLICKING BUTTONS
+document.addEventListener("DOMContentLoaded", () => {
+    const forms = document.querySelectorAll(
+        "#loginForm, #registerForm, #searchForm, #profileForm, #changePasswordForm"
+    )
+
+    const buttons = document.querySelectorAll(
+        "#confirm-delete"
+    )
+
+    forms.forEach(form => {
+        form.addEventListener("submit", () => {
+            LOADER.style.display = "flex";
+        });
+    });
+
+    buttons.forEach(button => {
+        button.addEventListener("click", () => {
+            LOADER.style.display = "flex";
+        });
+    });
+});
 
 /// HIDE LOADER WHEN USING BACK BUTTON
 window.addEventListener("pageshow", event => {
