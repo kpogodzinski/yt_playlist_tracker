@@ -95,6 +95,13 @@ def change_display_name(username, display_name):
     finally:
         conn.close()
 
+def check_password(username, password):
+    conn, cursor = db_connect("users")
+    cursor.execute("SELECT password FROM users WHERE username=?", (username,))
+    hash = cursor.fetchone()[0]
+    conn.close()
+    return check_password_hash(hash, password)
+
 def get_preferences(user_id):
     conn, cursor = db_connect("users")
     row = cursor.execute("SELECT * FROM preferences WHERE user_id = (?)", (user_id,)).fetchone()
@@ -110,6 +117,18 @@ def set_preference(user_id, preference, value):
         raise
     conn.commit()
     conn.close()
+
+def delete_user(user_id):
+    conn, cursor = db_connect("users")
+    try:
+        cursor.execute("DELETE FROM preferences WHERE user_id = ?", (user_id,))
+        cursor.execute("DELETE FROM users WHERE id = ?", (user_id,))
+        conn.commit()
+        return "success"
+    except sqlite3.Error:
+        return "error"
+    finally:
+        conn.close()
 
 def _create_users_db():
     conn, cursor = db_connect("users")

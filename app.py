@@ -1,3 +1,5 @@
+import os
+
 from flask import *
 import sqlite3
 from dotenv import load_dotenv
@@ -60,7 +62,7 @@ def login():
         if user:
             session["user_id"] = user[0]
             session["username"] = user[1]
-            session["display_name"] = user[2] if user[2] else ""
+            session["display_name"] = user[2] or ""
             return redirect(url_for("home"))
         else:
             flash("Invalid username or password!", "error")
@@ -82,9 +84,7 @@ def home():
         return redirect(url_for("login"))
 
     channels = db.get_saved_channels(session["username"])
-    display_name = session["display_name"]
-    if not display_name:
-        display_name = session["username"]
+    display_name = session["display_name"] or session["username"]
 
     return render_template("index.html", channels=channels, display_name=display_name)
 
@@ -128,6 +128,9 @@ def profile():
                 flash("Password changed successfully.", "success password")
             return redirect(url_for("profile"))
 
+    ### DELETE ACCOUNT SECTION ###
+    flash("For security reasons, please confirm your password one last time.", "warning delete")
+    flash("All your data will be permanently deleted.", "warning delete")
     return render_template("profile.html", username=username, display_name=display_name)
 
 @app.route("/<channel_id>")
@@ -424,6 +427,22 @@ def set_preference():
                 return jsonify({"status": "error"}), 500
 
     return jsonify({"status": "error"}), 400
+
+@app.route("/delete_account", methods=["DELETE"])
+def delete_account():
+    if "user_id" not in session:
+        return redirect(url_for("login"))
+
+    password = request.get_json()["password"]
+    if db.check_password(session["username"], password):
+        db.delete_user(session["user_id"])
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+        db_path = os.path.join(base_dir, "databases", f"{session['username']}.db")
+        os.remove(db_path)
+        session.clear()
+        return jsonify({"status": "success"})
+    else:
+        return jsonify({"status": "wrong_password"})
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)

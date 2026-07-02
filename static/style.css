@@ -54,7 +54,7 @@ form {
     margin: 8px 0;
 }
 
-form input {
+form input, input {
     margin: 6px 0;
     padding: 6px 12px;
     width: 200px;
@@ -227,18 +227,18 @@ button.save-btn:disabled {
     cursor: not-allowed;
 }
 
-button.rm-btn, button.del-btn {
+button.danger-btn {
     background-color: inherit;
     color: #cd0000;
     border-color: #cd0000;
 }
 
-button.rm-btn:hover, button.del-btn:hover {
+button.danger-btn:hover {
     background-color: #2e2e2e;
     transform: translateY(-2px);
 }
 
-button.rm-btn:disabled, button.del-btn:disabled {
+button.danger-btn:disabled {
     background-color: #cd0000;
     color: white;
     cursor: not-allowed;
