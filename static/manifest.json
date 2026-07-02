@@ -1,6 +1,6 @@
 {
   "name": "YT Playlist Tracker",
-  "short_name": "YT Playlist",
+  "short_name": "YT Tracker",
   "start_url": "/",
   "display": "browser",
   "theme_color": "#1e1e1e",

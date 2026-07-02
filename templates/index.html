@@ -2,6 +2,7 @@
 
 {% block content %}
     {% if channels %}
+        <h1>Hello, {{ display_name }}!</h1>
         <h2>Your saved channels</h2>
         <p>Total channels: {{ channels | length }}</p>
         <div class="grid">

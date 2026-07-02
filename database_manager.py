@@ -46,40 +46,54 @@ def login_user(username, password):
     conn, cursor = db_connect("users")
 
     try:
-        cursor.execute("SELECT * FROM users WHERE username = (?)", (username,))
+        cursor.execute("SELECT id, username, display_name, password FROM users WHERE username = ?",
+                       (username,))
     except sqlite3.OperationalError as e:
         if "no such table" in str(e):
             _create_users_db()
-            cursor.execute("SELECT * FROM users WHERE username = (?)", (username,))
+            cursor.execute("SELECT id, username, display_name, password FROM users WHERE username = ?",
+                           (username,))
         else:
             raise
 
     user = cursor.fetchone()
     conn.close()
 
-    if user and check_password_hash(user[2], password):
-        return user[0:2]
+    if user and check_password_hash(user[-1], password):
+        return user[0:-1]
     else:
         return None
 
 def change_password(username, current_password, new_password):
     conn, cursor = db_connect("users")
 
-    cursor.execute("SELECT password FROM users WHERE username = ?", (username,))
-    user = cursor.fetchone()
+    cursor.execute("SELECT password FROM users WHERE username=?", (username,))
+    password = cursor.fetchone()[0]
 
-    if not check_password_hash(user[0], current_password):
+    if not check_password_hash(password, current_password):
+        conn.close()
         return "invalid"
 
     try:
         new_hash = generate_password_hash(new_password)
         cursor.execute("UPDATE users SET password=? WHERE username=?", (new_hash, username))
+        conn.commit()
+        return "success"
     except sqlite3.Error:
         return "error"
+    finally:
+        conn.close()
 
-    conn.commit()
-    conn.close()
-    return "success"
+def change_display_name(username, display_name):
+    conn, cursor = db_connect("users")
+    try:
+        cursor.execute("UPDATE users SET display_name=? WHERE username=?", (display_name, username))
+        conn.commit()
+        return "success"
+    except sqlite3.Error:
+        return "error"
+    finally:
+        conn.close()
 
 def get_preferences(user_id):
     conn, cursor = db_connect("users")
@@ -103,6 +117,7 @@ def _create_users_db():
                     CREATE TABLE users (
                         id INTEGER PRIMARY KEY AUTOINCREMENT,
                         username TEXT UNIQUE NOT NULL,
+                        display_name TEXT,
                         password TEXT NOT NULL
                     );
                 """)

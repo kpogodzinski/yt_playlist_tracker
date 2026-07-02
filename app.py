@@ -60,6 +60,7 @@ def login():
         if user:
             session["user_id"] = user[0]
             session["username"] = user[1]
+            session["display_name"] = user[2] if user[2] else ""
             return redirect(url_for("home"))
         else:
             flash("Invalid username or password!", "error")
@@ -81,8 +82,11 @@ def home():
         return redirect(url_for("login"))
 
     channels = db.get_saved_channels(session["username"])
+    display_name = session["display_name"]
+    if not display_name:
+        display_name = session["username"]
 
-    return render_template("index.html", channels=channels)
+    return render_template("index.html", channels=channels, display_name=display_name)
 
 @app.route("/profile", methods=["GET", "POST"])
 def profile():
@@ -90,14 +94,22 @@ def profile():
         return redirect(url_for("login"))
 
     username = session["username"]
-    # fullname =
+    display_name = session["display_name"]
 
     if request.method == "POST":
+        ### PROFILE SECTION ###
         if request.form["form_id"] == "profileForm":
-            flash("Testing success flash message.", "success profile")
-            flash("Testing warning flash message.", "warning profile")
-            flash("Testing error flash message.", "error profile")
+            new_display_name = request.form["display_name"]
 
+            status = db.change_display_name(username, new_display_name)
+            if status == "error":
+                flash("Something went wrong.", "error profile")
+            elif status == "success":
+                flash("Display name changed successfully.", "success profile")
+                session["display_name"] = new_display_name
+                return redirect(url_for("profile"))
+
+        ### PASSWORD SECTION ###
         elif request.form["form_id"] == "changePasswordForm":
             current_password = request.form["current_password"]
             new_password = request.form["new_password"]
@@ -116,7 +128,7 @@ def profile():
                 flash("Password changed successfully.", "success password")
             return redirect(url_for("profile"))
 
-    return render_template("profile.html", username=username)
+    return render_template("profile.html", username=username, display_name=display_name)
 
 @app.route("/<channel_id>")
 def channel(channel_id):
