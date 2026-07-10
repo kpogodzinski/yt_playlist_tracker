@@ -283,7 +283,7 @@ def save_playlist(playlist_id):
     if "user_id" not in session:
         return redirect(url_for("login"))
 
-    data = yt.get_playlist_data(playlist_id)
+    data = yt.get_playlist_details(playlist_id)
     channel = yt.get_channel_data(data["channel_id"])
 
     try:
@@ -293,7 +293,9 @@ def save_playlist(playlist_id):
 
     status = "success"
     try:
-        db.save_playlist(session["username"], playlist_id, data["channel_id"], data["title"], data["thumbnail"])
+        db.save_playlist(
+            session["username"], playlist_id,
+            data["channel_id"], data["title"], data["description"], data["thumbnail"], data["created"])
         db.update_playlist_count(session["username"], playlist_id)
     except sqlite3.IntegrityError:
         status = "exists"
@@ -322,22 +324,28 @@ def playlist_details(playlist_id):
     saved_playlists = db.get_saved_playlist_ids(session["username"])
 
     if playlist_id in saved_playlists:
-        playlist_data = db.get_playlist_data(session["username"], playlist_id)
+        playlist_data = db.get_playlist_details(session["username"], playlist_id)
         videos = db.get_playlist_videos(session["username"], playlist_id)
+        channel_name = db.get_channel_data(session["username"], playlist_data["channel_id"])["name"] if playlist_data else None
     else:
-        data = yt.get_playlist_data(playlist_id)
+        data = yt.get_playlist_details(playlist_id)
+        channel_name = data["channel_name"]
         playlist_data = {
             "id": playlist_id,
             "title": data["title"],
+            "description": data["description"],
             "thumbnail": data["thumbnail"],
+            "created": data["created"],
+            "count": data["count"],
             "progress": 0
         }
-        data = yt.get_videos(playlist_id)
+        data = yt.get_playlist_videos(playlist_id)
         videos = [{
             "id": video["id"],
             "playlist_id": playlist_id,
             "position": video["position"],
             "title": video["title"],
+            "description": video["description"],
             "thumbnail": video["thumbnail"],
             "duration": video["duration"],
             "published": video["published"],
@@ -352,6 +360,7 @@ def playlist_details(playlist_id):
     return render_template("playlist.html",
                            playlist=playlist_data,
                            saved_playlists=saved_playlists,
+                           channel_name=channel_name,
                            videos=videos,
                            watched_videos=watched_videos,
                            total_videos=total_videos,
@@ -379,7 +388,7 @@ def watch_all(playlist_id):
     if "user_id" not in session:
         return redirect(url_for("login"))
 
-    playlist = db.get_playlist_data(session["username"], playlist_id)
+    playlist = db.get_playlist_details(session["username"], playlist_id)
     videos = db.get_playlist_videos(session["username"], playlist_id)
 
     if playlist_id not in db.get_saved_playlist_ids(session["username"]):
@@ -396,7 +405,9 @@ def fetch_playlist(playlist_id):
     if "user_id" not in session:
         return redirect(url_for("login"))
 
-    videos = yt.get_videos(playlist_id)
+    playlist = yt.get_playlist_details(playlist_id)
+    db.update_playlist_details(session["username"], playlist_id, playlist["title"], playlist["description"], playlist["thumbnail"], playlist["created"])
+    videos = yt.get_playlist_videos(playlist_id)
     db.insert_or_update_videos(session["username"], videos)
     db.update_playlist_count(session["username"], playlist_id)
 

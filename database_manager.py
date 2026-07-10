@@ -183,7 +183,9 @@ def _create_user_tables(username):
                     id TEXT PRIMARY KEY,
                     channel_id TEXT,
                     title TEXT,
+                    description TEXT,
                     thumbnail TEXT,
+                    created TEXT DEFAULT '1970-01-01',
                     date_saved TEXT DEFAULT current_timestamp,
                     last_watched TEXT DEFAULT '1970-01-01',
                     count INTEGER,
@@ -199,6 +201,7 @@ def _create_user_tables(username):
                     playlist_id TEXT,
                     position INTEGER,
                     title TEXT,
+                    description TEXT,
                     thumbnail TEXT,
                     duration TEXT,
                     published TEXT,
@@ -283,12 +286,15 @@ def get_saved_channels(username):
 
 """ PLAYLISTS """
 
-def save_playlist(username, playlist_id, channel_id, title, thumbnail):
+def save_playlist(username, playlist_id, channel_id, title, description, thumbnail, created_at):
     conn, cursor = db_connect(username)
-    cursor.execute("INSERT INTO playlists (id, channel_id, title, thumbnail) VALUES (?, ?, ?, ?)",
-                   (playlist_id, channel_id, title, thumbnail))
+    cursor.execute("""
+            INSERT INTO playlists (id, channel_id, title, description, thumbnail, created_at) 
+            VALUES (?, ?, ?, ?, ?, ?)
+        """, (playlist_id, channel_id, title, description, thumbnail, created_at)
+    )
 
-    videos = yt.get_videos(playlist_id)
+    videos = yt.get_playlist_videos(playlist_id)
     for video in videos:
         cursor.execute("INSERT INTO videos (id, playlist_id, position, title, thumbnail, duration, published) VALUES (?, ?, ?, ?, ?, ?, ?)",
                    (video.get("id"),
@@ -301,11 +307,21 @@ def save_playlist(username, playlist_id, channel_id, title, thumbnail):
     conn.commit()
     conn.close()
 
-def get_playlist_data(username, playlist_id):
+def get_playlist_details(username, playlist_id):
     conn, cursor = db_connect(username)
     row = cursor.execute("SELECT * FROM playlists WHERE id = (?)", (playlist_id,)).fetchone()
     conn.close()
     return row
+
+def update_playlist_details(username, playlist_id, title, description, thumbnail, created):
+    conn, cursor = db_connect(username)
+    cursor.execute("""
+            UPDATE playlists 
+            SET (title, description, thumbnail, created) = (?, ?, ?, ?) 
+            WHERE id = (?)
+        """, (title, description, thumbnail, created, playlist_id))
+    conn.commit()
+    conn.close()
 
 def get_saved_playlists(username, channel_id):
     conn, cursor = db_connect(username)
@@ -353,9 +369,9 @@ def insert_or_update_videos(username, videos):
     for video in videos:
         try:
             cursor.execute(
-                "INSERT INTO videos (id, playlist_id, position, title, thumbnail, duration, published) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                "INSERT INTO videos (id, playlist_id, position, title, description, thumbnail, duration, published) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
                 (video["id"], video["playlist_id"], video["position"],
-                 video["title"], video["thumbnail"], video["duration"], video["published"])
+                 video["title"], video["description"], video["thumbnail"], video["duration"], video["published"])
             )
         except sqlite3.IntegrityError:
             print(f"Video {video['id']} already exists. Updating metadata.")
@@ -364,13 +380,14 @@ def insert_or_update_videos(username, videos):
                 UPDATE videos 
                 SET playlist_id = ?, 
                     position = ?, 
-                    title = ?, 
+                    title = ?,
+                    description = ?,
                     thumbnail = ?, 
                     duration = ?, 
                     published = ?
                 WHERE id = ?
                 """,
-                (video["playlist_id"], video["position"], video["title"],
+                (video["playlist_id"], video["position"], video["title"], video["description"],
                  video["thumbnail"], video["duration"], video["published"], video["id"])
             )
     conn.commit()

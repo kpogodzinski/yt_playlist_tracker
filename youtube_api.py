@@ -3,6 +3,7 @@ import re
 from os import getenv
 from itertools import islice
 from datetime import datetime
+from dateutil.parser import isoparse
 
 YOUTUBE_API_KEY = getenv("YOUTUBE_API_KEY")
 
@@ -56,21 +57,26 @@ def get_channel_playlists(channel_id):
 
     return data
 
-def get_playlist_data(playlist_id):
+def get_playlist_details(playlist_id):
     url = "https://www.googleapis.com/youtube/v3/playlists"
     params = {
-        "part": "snippet",
+        "part": "snippet,contentDetails",
         "id": playlist_id,
         "key": YOUTUBE_API_KEY
     }
 
     response = requests.get(url, params=params)
     snippet = response.json()["items"][0]["snippet"]
+    contentDetails = response.json()["items"][0]["contentDetails"]
     data = {
         "playlist_id": playlist_id,
         "channel_id": snippet.get("channelId"),
+        "channel_name": snippet.get("channelTitle"),
         "title": snippet.get("title"),
+        "description": snippet.get("description"),
         "thumbnail": snippet.get("thumbnails").get("high").get("url"),
+        "created": isoparse(snippet.get("publishedAt")).strftime("%d %B %Y"),
+        "count": contentDetails.get("itemCount")
     }
     return data
 
@@ -130,7 +136,7 @@ def _batch(iterable, n=50):
     while batch := list(islice(it, n)):
         yield batch
 
-def get_videos(playlist_id):
+def get_playlist_videos(playlist_id):
     videos = []
     url = "https://www.googleapis.com/youtube/v3/playlistItems"
     page_token = None
@@ -164,15 +170,16 @@ def get_videos(playlist_id):
     data = []
     for video in videos:
         try:
-            vid = video["snippet"]["resourceId"]["videoId"]
+            v_id = video["snippet"]["resourceId"]["videoId"]
             data.append({
                 "id": video["id"],
                 "playlist_id": playlist_id,
                 "position": video["snippet"]["position"],
                 "title": video["snippet"]["title"],
+                "description": video["snippet"]["description"],
                 "thumbnail": video["snippet"]["thumbnails"]["high"]["url"],
-                "duration": _parse_duration(video_durations[vid]),
-                "published": (datetime.fromisoformat(video_dates[vid].replace("Z", "+00:00"))).strftime("%d %B %Y")
+                "duration": _parse_duration(video_durations[v_id]),
+                "published": (datetime.fromisoformat(video_dates[v_id].replace("Z", "+00:00"))).strftime("%d %B %Y")
             })
         except KeyError:
             print(f"Video {video['id']} is private.")

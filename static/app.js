@@ -210,10 +210,12 @@ document.querySelectorAll(".playlist-details-btn").forEach(button => {
         event.preventDefault();
         event.stopPropagation();
 
-        POPUP.style.display = "flex";
+        // POPUP.style.display = "flex";
+        POPUP.classList.add("visible");
 
         document.getElementById("closePopup").onclick = () => {
-            POPUP.style.display = "none";
+            POPUP.classList.remove("visible");
+            // POPUP.style.display = "none";
         }
     })
 })

@@ -174,25 +174,54 @@ form button, form select, .pagination a.button {
 }
 
 .popup {
-    display: none;
+    display: flex;
     position: fixed;
+    opacity: 0;
+    visibility: hidden;
     inset: 0;
     background: rgba(0,0,0,0.5);
     justify-content: center;
     align-items: center;
     z-index: 999;
+    transition: opacity 0.2s ease, visibility 0.2s ease;
+}
+
+.popup.visible {
+    opacity: 1;
+    visibility: visible;
 }
 
 .popup-content {
     background-color: #1f1f1f;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.5);
     padding: 20px;
     border-radius: 12px;
-    min-width: 400px;
-    max-width: 80%;
+    min-width: 300px;
+    max-width: 60%;
+    max-height: 80%;
+    overflow-wrap: break-word;
+    overflow-y: auto;
+    transform: translateY(20px);
+    transition: transform 0.2s ease;
+}
+
+.popup.visible .popup-content {
+    transform: translateY(0px);
+}
+
+.popup .details {
+    color: #777777;
+}
+
+.popup .description {
+    white-space: pre-line;
+    text-align: justify;
 }
 
 #closePopup {
     margin: 0;
+    font-size: 24px;
+    padding: 4px 8px;
 }
 
 .pagination {

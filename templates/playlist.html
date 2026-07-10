@@ -31,13 +31,18 @@
     {% if playlist.id in saved_playlists %}
         <button class="fetch-btn" data-playlist="{{ playlist.id }}">Refresh playlist</button>
     {% endif %}
-    <button class="playlist-details-btn">
-        <span style="font-family: Georgia, serif; font-size: 15px; font-style: italic">i</span>
-    </button>
+    <button class="playlist-details-btn">&#9432; Info</button>
     <div class="popup" id="popup">
         <div class="popup-content">
-            <button id="closePopup">✕</button>
-            <h2>{{ playlist.title }}</h2>
+            <button id="closePopup">&times;</button>
+            <h1>{{ playlist.title }}</h1>
+            <p class="details">
+                Created: {{ playlist.created }} •
+                {{ playlist.count }} video{% if playlist.count != 1 %}s{% endif %} •
+                {{ channel_name }}
+            </p>
+            <h3>Description:</h3>
+            <p class="description">{{ playlist.description }}</p>
         </div>
     </div>
     <label class="toggle-switch preference-toggle">
