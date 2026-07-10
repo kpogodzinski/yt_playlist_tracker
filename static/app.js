@@ -1,4 +1,5 @@
 const LOADER = document.getElementById("loader-wrapper")
+const POPUP = document.getElementById("popup")
 
 document.querySelectorAll(".save-btn").forEach(button => {
     button.addEventListener("click", (event) => {
@@ -203,6 +204,19 @@ document.querySelectorAll(".fetchall-btn").forEach(button => {
         LOADER.style.display = "none";
     })
 });
+
+document.querySelectorAll(".playlist-details-btn").forEach(button => {
+    button.addEventListener("click", (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+
+        POPUP.style.display = "flex";
+
+        document.getElementById("closePopup").onclick = () => {
+            POPUP.style.display = "none";
+        }
+    })
+})
 
 document.querySelectorAll(".preference-form select").forEach(select => {
     select.addEventListener("change", () => {

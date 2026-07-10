@@ -31,6 +31,15 @@
     {% if playlist.id in saved_playlists %}
         <button class="fetch-btn" data-playlist="{{ playlist.id }}">Refresh playlist</button>
     {% endif %}
+    <button class="playlist-details-btn">
+        <span style="font-family: Georgia, serif; font-size: 15px; font-style: italic">i</span>
+    </button>
+    <div class="popup" id="popup">
+        <div class="popup-content">
+            <button id="closePopup">✕</button>
+            <h2>{{ playlist.title }}</h2>
+        </div>
+    </div>
     <label class="toggle-switch preference-toggle">
       <input type="checkbox" name="videos_hide_watched" {% if videos_hide_watched %}checked{% endif %}>
       <span class="slider"></span>
