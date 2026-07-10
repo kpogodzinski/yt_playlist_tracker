@@ -182,12 +182,11 @@ document.querySelectorAll(".fetchall-btn").forEach(button => {
         let current = 1
         for (const id of playlists) {
             try {
+                button.textContent = `Refreshing... (${current}/${total})`
                 const response = await fetch(`/fetch_playlist/${id}`, { method: "POST" })
-
                 const data = await response.json()
                 if (data.status === "success") {
                     current += 1
-                    button.textContent = `Refreshing... (${current}/${total})`
                 }
                 else {
                     console.log(data);
