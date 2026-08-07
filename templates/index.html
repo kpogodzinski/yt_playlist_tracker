@@ -11,6 +11,7 @@
                 <div class="card">
                     <h4>{{ channel.name }}</h4>
                     <img src="{{ channel.thumbnail }}" alt="Channel Thumbnail" />
+                    <button class="youtube-btn danger-btn" data-type="channel" data-id="{{ channel.id }}">&#9654; Open on YouTube</button>
                 </div>
             </a>
         {% endfor %}

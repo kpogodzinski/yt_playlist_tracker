@@ -32,6 +32,9 @@
         <button class="fetch-btn" data-playlist="{{ playlist.id }}">Refresh playlist</button>
     {% endif %}
     <button class="playlist-details-btn">&#9432; Info</button>
+    <button class="youtube-btn danger-btn" data-type="playlist" data-id="{{ playlist.id }}">&#9654; Open on YouTube</button>
+
+    <!-- BEGIN POPUP -->
     <div class="popup" id="popup">
         <div class="popup-content">
             <button id="closePopup">&times;</button>
@@ -45,6 +48,8 @@
             <p class="description">{{ playlist.description }}</p>
         </div>
     </div>
+    <!-- END POPUP -->
+
     <label class="toggle-switch preference-toggle">
       <input type="checkbox" name="videos_hide_watched" {% if videos_hide_watched %}checked{% endif %}>
       <span class="slider"></span>

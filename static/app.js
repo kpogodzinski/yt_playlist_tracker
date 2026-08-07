@@ -220,6 +220,31 @@ document.querySelectorAll(".playlist-details-btn").forEach(button => {
     })
 })
 
+document.querySelectorAll(".youtube-btn").forEach(button => {
+    button.addEventListener("click", (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+
+        const type = button.dataset.type;
+        const id = button.dataset.id;
+
+        const confirmed = confirm(`Open this ${type} on YouTube?`);
+        if (!confirmed) return;
+
+        let url = "";
+        if (type === "playlist") {
+            url = `https://youtube.com/playlist?list=${id}`;
+        }
+        else if (type === "channel") {
+            url = `https://youtube.com/channel/${id}`;
+        }
+
+        if (url) {
+            window.open(url, "_blank", "noopener, noreferrer");
+        }
+    })
+})
+
 document.querySelectorAll(".preference-form select").forEach(select => {
     select.addEventListener("change", () => {
         const form = select.closest("form");
