@@ -1,67 +1,138 @@
 const LOADER = document.getElementById("loader-wrapper")
 const POPUP = document.getElementById("popup")
 
+function handleUnauthorized() {
+    alert("User not logged in or session expired.");
+    window.location.replace("/login");
+}
+
+function handleInternalServerError() {
+    alert("Internal server error occurred.");
+}
+
 document.querySelectorAll(".save-btn").forEach(button => {
-    button.addEventListener("click", (event) => {
+    button.addEventListener("click", async (event) => {
         event.preventDefault();
         event.stopPropagation();
 
-        const playlistId = button.dataset.id
+        const channelId = button.dataset.channel_id;
+        const playlistId = button.dataset.playlist_id;
 
         LOADER.style.display = "flex";
         button.textContent = "Saving...";
 
-        fetch(`/save_playlist/${playlistId}`, { method: "POST" })
-        .then(response => response.json())
-        .then(data => {
-            if (data.status === "success") {
-                button.textContent = "Saved!";
-                button.disabled = true;
-            } else if (data.status === "exists") {
-                button.textContent = "Already saved";
-                button.disabled = true;
+        try {
+            /// Check if the channel exists
+            let channel_exists = false;
+            let response = await fetch(`/api/channels/${channelId}`);
+            if (response.status === 401)
+                return handleUnauthorized();
+            channel_exists = response.ok;
+
+            /// If channel does not exist, try to save it
+            if (!channel_exists) {
+                response = await fetch("/api/channels", {
+                    method: "POST",
+                    headers: {"Content-Type": "application/json"},
+                    body: JSON.stringify({channel_id: channelId})
+                });
+
+                if (!response.ok) {
+                    if (response.status === 401)
+                        return handleUnauthorized();
+                    if (response.status === 409)
+                        console.log("Channel already exists.");
+                    if (response.status === 500)
+                        return handleInternalServerError();
+                }
             }
-        })
-        .catch(err => {
-            console.error(err);
-            window.location.reload();
-        })
-        .finally(() => {
+
+            /// Try to save the playlist
+            response = await fetch("/api/playlists", {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify({channel_id: channelId, playlist_id: playlistId})
+            });
+
+            if (!response.ok) {
+                if (response.status === 401)
+                    return handleUnauthorized();
+                if (response.status === 409) {
+                    alert("This playlist is already saved.")
+                    button.textContent = "Already saved!";
+                    button.disabled = true;
+                    return;
+                }
+                if (response.status === 500)
+                    return handleInternalServerError();
+            }
+
+            /// Try to save the playlist's videos
+            response = await fetch("/api/videos", {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify({playlist_id: playlistId})
+            });
+
+            if (!response.ok) {
+                if (response.status === 401)
+                    return handleUnauthorized();
+                if (response.status === 500)
+                    return handleInternalServerError();
+            }
+
+            button.textContent = "Saved!";
+            button.disabled = true;
+        }
+        catch (error) {
+            console.error("An error occurred: ", error);
+            button.textContent = "Error";
+        }
+        finally {
             LOADER.style.display = "none";
-        })
+        }
     });
 });
 
-document.querySelectorAll(".rm-btn").forEach(button => {
-    button.addEventListener("click", (event) => {
+document.querySelectorAll(".del-btn").forEach(button => {
+    button.addEventListener("click", async (event) => {
         event.preventDefault();
         event.stopPropagation();
 
-        const confirmed = confirm("Are you sure to remove this playlist?");
+        const confirmed = confirm("Are you sure to delete this playlist?");
         if (!confirmed) return;
 
         const playlistId = button.dataset.id
 
         LOADER.style.display = "flex";
-        button.textContent = "Removing...";
+        button.textContent = "Deleting...";
 
-        fetch(`/remove_playlist/${playlistId}`, { method: "POST" })
-        .then(response => response.json())
-        .then(data => {
-            if (data.status === "success") {
-                button.textContent = "Removed!";
-                button.disabled = true;
-            } else {
-                button.textContent = "Error";
+        try {
+            const response = await fetch(`/api/playlists/${playlistId}`, { method: "DELETE" });
+
+            if (!response.ok) {
+                if (response.status === 401)
+                    return handleUnauthorized();
+                if (response.status === 404) {
+                    alert("This playlist was not found.");
+                    button.textContent = "Already deleted!";
+                    button.disabled = true;
+                    return;
+                }
+                if (response.status === 500)
+                    return handleInternalServerError();
             }
-        })
-        .catch(err => {
-            console.error(err);
-            window.location.reload();
-        })
-        .finally(() => {
+
+            button.textContent = "Deleted!";
+            button.disabled = true;
+        }
+        catch (error) {
+            console.error("An error occurred: ", error);
+            button.textContent = "Error";
+        }
+        finally {
             LOADER.style.display = "none";
-        })
+        }
     });
 });
 
@@ -240,6 +311,7 @@ document.querySelectorAll(".youtube-btn").forEach(button => {
         }
 
         if (url) {
+            // noinspection SpellCheckingInspection
             window.open(url, "_blank", "noopener, noreferrer");
         }
     })
@@ -380,6 +452,7 @@ window.addEventListener("pageshow", event => {
 document.querySelectorAll("a").forEach(a => {
     a.addEventListener("click", e => {
         LOADER.style.display = "flex";
+        // noinspection JSUnresolvedReference
         if (window.navigator.standalone && a.hostname === location.hostname) {
             e.preventDefault();
             window.location.href = a.href;

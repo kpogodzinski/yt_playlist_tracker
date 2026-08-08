@@ -110,7 +110,8 @@
                             <p class="count">{{ playlist.count }} video{% if playlist.count != 1 %}s{% endif %}</p>
                         </div>
                         <button class="save-btn"
-                                data-id="{{ playlist.id }}"
+                                data-channel_id="{{ channel_id }}"
+                                data-playlist_id="{{ playlist.id }}"
                                 {% if playlist.id in saved_playlists %} disabled {% endif %}>
                             {% if playlist.id in saved_playlists %}
                                 Saved!

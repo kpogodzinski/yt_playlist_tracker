@@ -7,7 +7,47 @@ from dateutil.parser import isoparse
 
 YOUTUBE_API_KEY = getenv("YOUTUBE_API_KEY")
 
-def get_channel_playlists(channel_id):
+def get_channel(channel_id):
+    url = "https://www.googleapis.com/youtube/v3/channels"
+    params = {
+        "part": "snippet",
+        "id": channel_id,
+        "key": YOUTUBE_API_KEY
+    }
+
+    response = requests.get(url, params=params)
+    snippet = response.json()["items"][0]["snippet"]
+    data = {
+        "channel_id": channel_id,
+        "name": snippet.get("title"),
+        "thumbnail": snippet.get("thumbnails").get("high").get("url")
+    }
+    return data
+
+def get_playlist(playlist_id):
+    url = "https://www.googleapis.com/youtube/v3/playlists"
+    params = {
+        "part": "snippet,contentDetails",
+        "id": playlist_id,
+        "key": YOUTUBE_API_KEY
+    }
+
+    response = requests.get(url, params=params)
+    snippet = response.json()["items"][0]["snippet"]
+    contentDetails = response.json()["items"][0]["contentDetails"]
+    data = {
+        "playlist_id": playlist_id,
+        "channel_id": snippet.get("channelId"),
+        "channel_name": snippet.get("channelTitle"),
+        "title": snippet.get("title"),
+        "description": snippet.get("description"),
+        "thumbnail": snippet.get("thumbnails").get("high").get("url"),
+        "created": isoparse(snippet.get("publishedAt")).strftime("%d %B %Y"),
+        "count": contentDetails.get("itemCount")
+    }
+    return data
+
+def get_playlists_by_channel(channel_id):
     playlists = []
     url = "https://www.googleapis.com/youtube/v3/playlists"
 
@@ -57,86 +97,7 @@ def get_channel_playlists(channel_id):
 
     return data
 
-def get_playlist_details(playlist_id):
-    url = "https://www.googleapis.com/youtube/v3/playlists"
-    params = {
-        "part": "snippet,contentDetails",
-        "id": playlist_id,
-        "key": YOUTUBE_API_KEY
-    }
-
-    response = requests.get(url, params=params)
-    snippet = response.json()["items"][0]["snippet"]
-    contentDetails = response.json()["items"][0]["contentDetails"]
-    data = {
-        "playlist_id": playlist_id,
-        "channel_id": snippet.get("channelId"),
-        "channel_name": snippet.get("channelTitle"),
-        "title": snippet.get("title"),
-        "description": snippet.get("description"),
-        "thumbnail": snippet.get("thumbnails").get("high").get("url"),
-        "created": isoparse(snippet.get("publishedAt")).strftime("%d %B %Y"),
-        "count": contentDetails.get("itemCount")
-    }
-    return data
-
-def get_channel_data(channel_id):
-    url = "https://www.googleapis.com/youtube/v3/channels"
-    params = {
-        "part": "snippet",
-        "id": channel_id,
-        "key": YOUTUBE_API_KEY
-    }
-
-    response = requests.get(url, params=params)
-    snippet = response.json()["items"][0]["snippet"]
-    data = {
-        "channel_id": channel_id,
-        "name": snippet.get("title"),
-        "thumbnail": snippet.get("thumbnails").get("high").get("url")
-    }
-    return data
-
-def _get_videos_durations_and_dates(ids):
-    url = "https://www.googleapis.com/youtube/v3/videos/"
-    params = {
-        "part": "snippet,contentDetails",
-        "id": ids,
-        "key": YOUTUBE_API_KEY
-    }
-    response = requests.get(url, params=params)
-    data = response.json()
-
-    video_durations = {}
-    video_dates = {}
-    for item in data["items"]:
-        video_durations[item["id"]] = item["contentDetails"]["duration"]
-        video_dates[item["id"]] = item["snippet"]["publishedAt"]
-
-    return video_durations, video_dates
-
-def _parse_duration(duration):
-    pattern = re.compile(r"PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?")
-    match = pattern.match(duration)
-    if not match:
-        return 0, 0, 0
-
-    h, m, s = match.groups()
-    h = int(h or 0)
-    m = int(m or 0)
-    s = int(s or 0)
-
-    if h > 0:
-        return f"{h}:{m:02}:{s:02}"
-    else:
-        return f"{m:02}:{s:02}"
-
-def _batch(iterable, n=50):
-    it = iter(iterable)
-    while batch := list(islice(it, n)):
-        yield batch
-
-def get_playlist_videos(playlist_id):
+def get_videos_by_playlist(playlist_id):
     videos = []
     url = "https://www.googleapis.com/youtube/v3/playlistItems"
     page_token = None
@@ -218,3 +179,42 @@ def search_channels(query, page_token=None):
             print(f"Channel {channel['id']} could not be loaded.")
 
     return data
+
+def _get_videos_durations_and_dates(ids):
+    url = "https://www.googleapis.com/youtube/v3/videos/"
+    params = {
+        "part": "snippet,contentDetails",
+        "id": ids,
+        "key": YOUTUBE_API_KEY
+    }
+    response = requests.get(url, params=params)
+    data = response.json()
+
+    video_durations = {}
+    video_dates = {}
+    for item in data["items"]:
+        video_durations[item["id"]] = item["contentDetails"]["duration"]
+        video_dates[item["id"]] = item["snippet"]["publishedAt"]
+
+    return video_durations, video_dates
+
+def _parse_duration(duration):
+    pattern = re.compile(r"PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?")
+    match = pattern.match(duration)
+    if not match:
+        return 0, 0, 0
+
+    h, m, s = match.groups()
+    h = int(h or 0)
+    m = int(m or 0)
+    s = int(s or 0)
+
+    if h > 0:
+        return f"{h}:{m:02}:{s:02}"
+    else:
+        return f"{m:02}:{s:02}"
+
+def _batch(iterable, n=50):
+    it = iter(iterable)
+    while batch := list(islice(it, n)):
+        yield batch

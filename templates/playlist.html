@@ -14,7 +14,8 @@
     <button class="back-btn" onclick="history.back()">< Go back</button>
     <button class="save-btn"
             {% if playlist.id in saved_playlists %} disabled{% endif %}
-            data-id="{{ playlist.id }}">
+            data-channel_id="{{ channel_id }}"
+            data-playlist_id="{{ playlist.id }}">
         {% if playlist.id in saved_playlists %}
             Saved!
         {% else %}

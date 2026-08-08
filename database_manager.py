@@ -1,6 +1,6 @@
-import sqlite3
-import youtube_api as yt
 import os
+import sqlite3
+
 from werkzeug.security import generate_password_hash, check_password_hash
 
 def db_connect(database=None):
@@ -97,10 +97,10 @@ def change_display_name(username, display_name):
 
 def check_password(username, password):
     conn, cursor = db_connect("users")
-    cursor.execute("SELECT password FROM users WHERE username=?", (username,))
-    hash = cursor.fetchone()[0]
+    cursor.execute("SELECT password FROM users WHERE username = ?", (username,))
+    password_hash = cursor.fetchone()[0]
     conn.close()
-    return check_password_hash(hash, password)
+    return check_password_hash(password_hash, password)
 
 def get_preferences(user_id):
     conn, cursor = db_connect("users")
@@ -188,7 +188,7 @@ def _create_user_tables(username):
                     created TEXT DEFAULT '1970-01-01',
                     date_saved TEXT DEFAULT current_timestamp,
                     last_watched TEXT DEFAULT '1970-01-01',
-                    count INTEGER,
+                    count INTEGER DEFAULT 0,
                     progress INTEGER DEFAULT 0,
                     FOREIGN KEY(channel_id) REFERENCES channels(id) ON DELETE RESTRICT
                 );
@@ -262,107 +262,191 @@ def _create_user_tables(username):
                             END
                         """)
     conn.commit()
+
+    cursor.execute("""
+                            CREATE TRIGGER update_playlist_count
+                            AFTER INSERT ON videos
+                            BEGIN
+                                UPDATE playlists 
+                                SET count = count + 1
+                                WHERE id = NEW.playlist_id;
+                            END
+                        """)
+    conn.commit()
     conn.close()
 
 """ CHANNELS """
 
-def save_channel(username, channel_id, name, thumbnail):
+def get_channel(username, channel_id):
     conn, cursor = db_connect(username)
-    cursor.execute("INSERT INTO channels VALUES (?, ?, ?)", (channel_id, name, thumbnail))
-    conn.commit()
-    conn.close()
-
-def get_channel_data(username, channel_id):
-    conn, cursor = db_connect(username)
-    row = cursor.execute("SELECT * FROM channels WHERE id = (?)", (channel_id,)).fetchone()
+    row = cursor.execute("SELECT * FROM channels WHERE id = ?", (channel_id,)).fetchone()
     conn.close()
     return row
 
-def get_saved_channels(username):
+def get_channels(username):
     conn, cursor = db_connect(username)
     rows = cursor.execute("SELECT * FROM channels").fetchall()
     conn.close()
     return rows
 
+def save_channel(username, channel_id, name, thumbnail):
+    conn, cursor = db_connect(username)
+    try:
+        cursor.execute("INSERT OR IGNORE INTO channels VALUES (?, ?, ?)", (channel_id, name, thumbnail))
+        conn.commit()
+
+        rows_inserted = cursor.rowcount
+        if rows_inserted > 0:
+            return "SUCCESS"
+        else:
+            print(f"Channel {name} ({channel_id}) already exists.")
+            return "EXISTS"
+
+    except sqlite3.Error as e:
+        print(f"Database error while saving the channel: {e}")
+        return "ERROR"
+
+    finally:
+        conn.close()
+
 """ PLAYLISTS """
 
-def save_playlist(username, playlist_id, channel_id, title, description, thumbnail, created_at):
+def get_playlist(username, playlist_id):
     conn, cursor = db_connect(username)
-    cursor.execute("""
-            INSERT INTO playlists (id, channel_id, title, description, thumbnail, created_at) 
-            VALUES (?, ?, ?, ?, ?, ?)
-        """, (playlist_id, channel_id, title, description, thumbnail, created_at)
-    )
-
-    videos = yt.get_playlist_videos(playlist_id)
-    for video in videos:
-        cursor.execute("INSERT INTO videos (id, playlist_id, position, title, thumbnail, duration, published) VALUES (?, ?, ?, ?, ?, ?, ?)",
-                   (video.get("id"),
-                    playlist_id,
-                    video.get("position"),
-                    video.get("title"),
-                    video.get("thumbnail"),
-                    video.get("duration"),
-                    video.get("published")))
-    conn.commit()
-    conn.close()
-
-def get_playlist_details(username, playlist_id):
-    conn, cursor = db_connect(username)
-    row = cursor.execute("SELECT * FROM playlists WHERE id = (?)", (playlist_id,)).fetchone()
+    row = cursor.execute("SELECT * FROM playlists WHERE id = ?", (playlist_id,)).fetchone()
     conn.close()
     return row
 
-def update_playlist_details(username, playlist_id, title, description, thumbnail, created):
-    conn, cursor = db_connect(username)
-    cursor.execute("""
-            UPDATE playlists 
-            SET (title, description, thumbnail, created) = (?, ?, ?, ?) 
-            WHERE id = (?)
-        """, (title, description, thumbnail, created, playlist_id))
-    conn.commit()
-    conn.close()
-
-def get_saved_playlists(username, channel_id):
-    conn, cursor = db_connect(username)
-    rows = cursor.execute("SELECT * FROM playlists WHERE channel_id = (?)", (channel_id,)).fetchall()
-    conn.close()
-    return rows
-
-def get_saved_playlist_ids(username):
+def get_playlists_ids(username):
     conn, cursor = db_connect(username)
     rows = cursor.execute("SELECT id FROM playlists").fetchall()
     conn.close()
     return {row["id"] for row in rows}
 
-def update_playlist_count(username, playlist_id):
+def get_playlists_by_channel(username, channel_id):
     conn, cursor = db_connect(username)
-    try:
-        cursor.execute("SELECT COUNT(*) FROM videos WHERE playlist_id = ?", (playlist_id,))
-        count = cursor.fetchone()[0]
-        cursor.execute("UPDATE playlists SET count = ? WHERE id = ?", (count, playlist_id))
-        conn.commit()
-        return "success"
-    except sqlite3.Error:
-        return "error"
-    finally:
-        conn.close()
-
-def remove_playlist(username, playlist_id):
-    conn, cursor = db_connect(username)
-    cursor.execute("DELETE FROM playlists WHERE id = (?)",
-                   (playlist_id,))
-    conn.commit()
-    conn.close()
-
-""" VIDEOS """
-
-def get_playlist_videos(username, playlist_id):
-    conn, cursor = db_connect(username)
-    rows = cursor.execute("SELECT * FROM videos WHERE playlist_id = (?)", (playlist_id,)).fetchall()
+    rows = cursor.execute("SELECT * FROM playlists WHERE channel_id = ?", (channel_id,)).fetchall()
     conn.close()
     return rows
 
+def save_playlist(username, playlist_id, channel_id, title, description, thumbnail, created):
+    conn, cursor = db_connect(username)
+
+    try:
+        cursor.execute("""
+                INSERT OR IGNORE INTO playlists (id, channel_id, title, description, thumbnail, created) 
+                VALUES (?, ?, ?, ?, ?, ?)
+            """, (playlist_id, channel_id, title, description, thumbnail, created)
+        )
+        conn.commit()
+
+        rows_inserted = cursor.rowcount
+        if rows_inserted > 0:
+            return "SUCCESS"
+        else:
+            print(f"Playlist {title} ({playlist_id}) already exists.")
+            return "EXISTS"
+
+    except sqlite3.Error as e:
+        print(f"Database error while saving the playlist: {e}")
+        return "ERROR"
+
+    finally:
+        conn.close()
+
+def update_playlist(username, playlist_id, title, description, thumbnail, created):
+    conn, cursor = db_connect(username)
+
+    try:
+        cursor.execute("""
+                UPDATE playlists 
+                SET (title, description, thumbnail, created) = (?, ?, ?, ?) 
+                WHERE id = ?
+            """, (title, description, thumbnail, created, playlist_id))
+        conn.commit()
+
+        rows_updated = cursor.rowcount
+        if rows_updated > 0:
+            return "SUCCESS"
+        else:
+            return "NOT_FOUND"
+
+    except sqlite3.Error as e:
+        print(f"Database error while updating the playlist: {e}")
+        return "ERROR"
+
+    finally:
+        conn.close()
+
+def delete_playlist(username, playlist_id):
+    conn, cursor = db_connect(username)
+
+    try:
+        cursor.execute("DELETE FROM playlists WHERE id = ?",(playlist_id,))
+        conn.commit()
+
+        rows_deleted = cursor.rowcount
+        if rows_deleted > 0:
+            return "SUCCESS"
+        else:
+            return "NOT_FOUND"
+
+    except sqlite3.Error as e:
+        print(f"Database error while deleting the playlist: {e}")
+        return "ERROR"
+
+    finally:
+        conn.close()
+
+""" VIDEOS """
+
+def get_video(username, video_id):
+    conn, cursor = db_connect(username)
+    row = cursor.execute("SELECT * FROM videos WHERE id = (?)", (video_id,)).fetchone()
+    conn.close()
+    return row
+
+def get_videos_by_playlist(username, playlist_id):
+    conn, cursor = db_connect(username)
+    rows = cursor.execute("SELECT * FROM videos WHERE playlist_id = ?", (playlist_id,)).fetchall()
+    conn.close()
+    return rows
+
+def save_videos(username, videos):
+    conn, cursor = db_connect(username)
+
+    try:
+        for video in videos:
+            cursor.execute("""
+                    INSERT OR IGNORE INTO videos (id, playlist_id, position, title, description, thumbnail, duration, published)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                    """, (
+                    video["id"],
+                    video["playlist_id"],
+                    video["position"],
+                    video["title"],
+                    video["description"],
+                    video["thumbnail"],
+                    video["duration"],
+                    video["published"]
+                )
+            )
+        conn.commit()
+
+        rows_inserted = cursor.rowcount
+        if rows_inserted == len(videos):
+            return "SUCCESS"
+        else:
+            return "EXISTS"
+
+    except sqlite3.Error as e:
+        print(f"Database error while saving the videos: {e}")
+        return "ERROR"
+
+    finally:
+        conn.close()
+
+### v-- TO-DO --v
 def insert_or_update_videos(username, videos):
     conn, cursor = db_connect(username)
 
