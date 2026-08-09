@@ -102,7 +102,7 @@ document.querySelectorAll(".del-btn").forEach(button => {
         const confirmed = confirm("Are you sure to delete this playlist?");
         if (!confirmed) return;
 
-        const playlistId = button.dataset.id
+        const playlistId = button.dataset.playlist_id;
 
         LOADER.style.display = "flex";
         button.textContent = "Deleting...";
@@ -137,83 +137,124 @@ document.querySelectorAll(".del-btn").forEach(button => {
 });
 
 document.querySelectorAll(".watch-btn").forEach(button => {
-    button.addEventListener("click", (event) => {
+    button.addEventListener("click", async (event) => {
         event.preventDefault();
         event.stopPropagation();
 
-        const videoId = button.dataset.video;
+        const videoId = button.dataset.video_id;
 
         LOADER.style.display = "flex";
         button.textContent = "Please wait...";
 
-        fetch(`/watch_video/${videoId}`, { method: "POST" })
-        .then(response => response.json())
-        .then(data => {
-            if (data.status === "watched") {
-                button.textContent = "Watched";
-                button.classList.add("watched");
-            } else if (data.status === "unwatched") {
-                button.textContent = "Not watched"
-                button.classList.remove("watched")
-            } else if (data.status === "not saved") {
-                button.textContent = "Save the playlist first!"
-            } else {
-                button.textContent = "Error"
+        try {
+            const is_watched = button.classList.contains("watched");
+
+            const response = await fetch(`/api/videos/${videoId}`, {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ watched: !is_watched })
+            })
+
+            if (!response.ok) {
+                if (response.status === 401)
+                    return handleUnauthorized();
+                if (response.status === 404) {
+                    alert("Please save the playlist first!");
+                    button.textContent = "Not watched";
+                    return;
+                }
+                if (response.status === 500)
+                    return handleInternalServerError();
             }
 
-        })
-        .catch(err => {
-            console.error(err);
-            window.location.reload();
-        })
-        .finally(() => {
+            const data = await response.json();
+
+            if (data.watched) {
+                button.textContent = "Watched";
+                button.classList.add("watched");
+            }
+            else {
+                button.textContent = "Not watched";
+                button.classList.remove("watched");
+            }
+        }
+        catch (error) {
+            console.error("An error occurred: ", error);
+            button.textContent = "Error";
+        }
+        finally {
             LOADER.style.display = "none";
-        })
+        }
     });
 });
 
-document.querySelectorAll(".watchall-btn").forEach(button => {
-    button.addEventListener("click", () => {
-        const confirmed = confirm("Are you sure to watch/unwatch the entire playlist?");
-        if (!confirmed) return;
+document.querySelector(".watchall-btn")?.addEventListener("click", async (event) => {
+    event.preventDefault();
+    event.stopPropagation();
 
-        const playlistId = button.dataset.playlist
+    const confirmed = confirm("Are you sure to watch/unwatch the entire playlist?");
+    if (!confirmed) return;
 
-        LOADER.style.display = "flex";
-        button.textContent = "Please wait..."
+    const button = event.currentTarget;
+    const playlistId = button.dataset.playlist_id
 
-        fetch(`/playlist/${playlistId}/watch_all`, {method: "POST"})
-        .then(response => response.json())
-        .then(data => {
-            if (data.status === "watched") {
-                document.querySelectorAll(".watch-btn").forEach(button => {
-                    button.classList.add("watched")
-                    button.textContent = "Watched";
-                })
-                button.textContent = "Unwatch all"
-                button.classList.add("watched")
-            } else if (data.status === "unwatched") {
-                document.querySelectorAll(".watch-btn").forEach(button => {
-                    button.classList.remove("watched")
-                    button.textContent = "Not watched";
-                })
-                button.textContent = "Watch all"
-                button.classList.remove("watched")
-            } else if (data.status === "not saved") {
-                button.textContent = "Save the playlist first!"
-            } else {
-                button.textContent = "Error"
+    LOADER.style.display = "flex";
+    button.textContent = "Please wait..."
+
+    try {
+        const is_watched = button.classList.contains("watched");
+
+        const response = await fetch(`/api/videos`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                playlist_id: playlistId,
+                watched: !is_watched
+            })
+        });
+
+        if (!response.ok) {
+            if (response.status === 401)
+                return handleUnauthorized();
+            if (response.status === 404) {
+                alert("Please save the playlist first!");
+                button.textContent = "Watch all";
+                return;
             }
-        })
-        .catch(err => {
-            console.error(err);
-            window.location.reload();
-        })
-        .finally(() => {
-            LOADER.style.display = "none";
-        })
-    })
+            if (response.status === 500)
+                return handleInternalServerError();
+        }
+
+        const data = await response.json();
+
+        /// Update the 'watch all' button and all the 'watch' buttons
+        if (data.watched) {
+            button.classList.add("watched");
+            button.textContent = "Unwatch all";
+            document.querySelectorAll(".watch-btn").forEach(b => {
+                b.classList.add("watched");
+                b.textContent = "Watched";
+            });
+        }
+        else {
+            button.classList.remove("watched");
+            button.textContent = "Watch all";
+            document.querySelectorAll(".watch-btn").forEach(b => {
+                b.classList.remove("watched");
+                b.textContent = "Not watched";
+            });
+        }
+    }
+    catch (error) {
+        console.error("An error occurred: ", error);
+        button.textContent = "Error";
+    }
+    finally {
+        LOADER.style.display = "none";
+    }
 });
+
+///// vvv TO-DO vvv /////
 
 document.querySelectorAll(".fetch-btn").forEach(button => {
     button.addEventListener("click", () => {

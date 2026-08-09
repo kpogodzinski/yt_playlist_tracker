@@ -332,40 +332,6 @@ def playlist_details(playlist_id):
                            total_videos=total_videos,
                            videos_hide_watched=videos_hide_watched)
 
-@app.route("/watch_video/<video_id>", methods=["POST"])
-def watch_video(video_id):
-    if "user_id" not in session:
-        return redirect(url_for("login"))
-
-    try:
-        is_watched = db.is_video_watched(session["username"], video_id)
-        if is_watched is not None:
-            db.watch_video(session["username"], video_id, unwatch=is_watched)
-            status = "unwatched" if is_watched else "watched"
-        else:
-            status = "not saved"
-    except sqlite3.IntegrityError:
-        status = "error"
-
-    return jsonify({"status": status})
-
-@app.route("/playlist/<playlist_id>/watch_all", methods=["POST"])
-def watch_all(playlist_id):
-    if "user_id" not in session:
-        return redirect(url_for("login"))
-
-    playlist = db.get_playlist(session["username"], playlist_id)
-    videos = db.get_videos_by_playlist(session["username"], playlist_id)
-
-    if playlist_id not in db.get_playlists_ids(session["username"]):
-        status = "not saved"
-    else:
-        for video in videos:
-            db.watch_video(session["username"], video["id"], unwatch = playlist["progress"] == 100)
-        status = "unwatched" if playlist["progress"] == 100 else "watched"
-
-    return jsonify({"status": status})
-
 @app.route("/fetch_playlist/<playlist_id>", methods=["POST"])
 def fetch_playlist(playlist_id):
     if "user_id" not in session:
@@ -425,6 +391,8 @@ def delete_account():
 
 ########## BEGIN API ##########
 
+""" USERS """
+
 """ CHANNELS """
 @app.route("/api/channels/<channel_id>", methods=["GET"])
 def get_channel(channel_id):
@@ -432,11 +400,12 @@ def get_channel(channel_id):
         return jsonify({"status": "error", "message": "Unauthorized"}), 401
 
     channel = db.get_channel(session["username"], channel_id)
-    if channel:
-        channel = dict(channel)
-        return jsonify({"status": "success", "data": channel}), 200
-    else:
+
+    if not channel:
         return jsonify({"status": "error", "message": "Channel not found"}), 404
+
+    channel = dict(channel)
+    return jsonify({"status": "success", "data": channel}), 200
 
 @app.route("/api/channels", methods=["POST"])
 def save_channel():
@@ -461,11 +430,12 @@ def get_playlist(playlist_id):
         return jsonify({"status": "error", "message": "Unauthorized"}), 401
 
     playlist = db.get_playlist(session["username"], playlist_id)
-    if playlist:
-        playlist = dict(playlist)
-        return jsonify({"status": "success", "data": playlist}), 200
-    else:
+
+    if not playlist:
         return jsonify({"status": "error", "message": "Playlist not found"}), 404
+
+    playlist = dict(playlist)
+    return jsonify({"status": "success", "data": playlist}), 200
 
 @app.route("/api/playlists", methods=["POST"])
 def save_playlist():
@@ -518,6 +488,28 @@ def get_video(video_id):
     video = dict(video)
     return jsonify({"status": "success", "data": video}), 200
 
+@app.route("/api/videos", methods=["GET"])
+def get_videos():
+    if "user_id" not in session:
+        return jsonify({"status": "error", "message": "Unauthorized"}), 401
+
+    playlist_id = request.args.get("playlist_id")
+
+    if playlist_id:
+        response = get_playlist(playlist_id)
+        exists = response[1] == 200
+
+        if not exists:
+            return response[0].get_json(), response[1]
+
+        videos = db.get_videos_by_playlist(session["username"], playlist_id)
+
+    else:
+        videos = db.get_videos(session["username"])
+
+    videos = [dict(video) for video in videos]
+    return jsonify({"status": "success", "data": videos}), 200
+
 @app.route("/api/videos", methods=["POST"])
 def save_videos():
     if "user_id" not in session:
@@ -531,6 +523,40 @@ def save_videos():
         return jsonify({"status": "success", "message": "Videos saved"}), 201
     elif status == "EXISTS":
         return jsonify({"status": "success", "message": "Some videos already exist"}), 200
+    elif status == "ERROR":
+        return jsonify({"status": "error", "message": "Internal database error"}), 500
+
+@app.route("/api/videos/<video_id>", methods=["PATCH"])
+def set_video_watched(video_id):
+    if "user_id" not in session:
+        return jsonify({"status": "error", "message": "Unauthorized"}), 401
+
+    watched = request.get_json()["watched"]
+
+    status = db.set_video_watched(session["username"], video_id, watched)
+
+    if status == "SUCCESS":
+        return jsonify({"status": "success", "message": "Video updated", "watched": watched}), 200
+    elif status == "NOT_FOUND":
+        return jsonify({"status": "error", "message": "Video not found"}), 404
+    elif status == "ERROR":
+        return jsonify({"status": "error", "message": "Internal database error"}), 500
+
+@app.route("/api/videos", methods=["PATCH"])
+def set_videos_watched_by_playlist():
+    if "user_id" not in session:
+        return jsonify({"status": "error", "message": "Unauthorized"}), 401
+
+    data = request.get_json()
+    playlist_id = data["playlist_id"]
+    watched = data["watched"]
+
+    status = db.set_videos_watched_by_playlist(session["username"], playlist_id, watched)
+
+    if status == "SUCCESS":
+        return jsonify({"status": "success", "message": "Playlist videos updated", "watched": watched}), 200
+    elif status == "NOT_FOUND":
+        return jsonify({"status": "error", "message": "Playlist not found"}), 404
     elif status == "ERROR":
         return jsonify({"status": "error", "message": "Internal database error"}), 500
 

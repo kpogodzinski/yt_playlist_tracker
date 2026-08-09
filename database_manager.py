@@ -402,9 +402,15 @@ def delete_playlist(username, playlist_id):
 
 def get_video(username, video_id):
     conn, cursor = db_connect(username)
-    row = cursor.execute("SELECT * FROM videos WHERE id = (?)", (video_id,)).fetchone()
+    row = cursor.execute("SELECT * FROM videos WHERE id = ?", (video_id,)).fetchone()
     conn.close()
     return row
+
+def get_videos(username):
+    conn, cursor = db_connect(username)
+    rows = cursor.execute("SELECT * FROM videos").fetchall()
+    conn.close()
+    return rows
 
 def get_videos_by_playlist(username, playlist_id):
     conn, cursor = db_connect(username)
@@ -446,7 +452,54 @@ def save_videos(username, videos):
     finally:
         conn.close()
 
+def is_video_watched(username, video_id):
+    conn, cursor = db_connect(username)
+    row = cursor.execute("SELECT is_watched FROM videos WHERE id = ?", (video_id,)).fetchone()
+    conn.close()
+    return row["is_watched"] if row else None
+
+def set_video_watched(username, video_id, watched):
+    conn, cursor = db_connect(username)
+
+    try:
+        cursor.execute("UPDATE videos SET is_watched = ? WHERE id = ?", (watched, video_id))
+        conn.commit()
+
+        rows_updated = cursor.rowcount
+        if rows_updated > 0:
+            return "SUCCESS"
+        else:
+            return "NOT_FOUND"
+
+    except sqlite3.Error as e:
+        print(f"Database error while updating the video: {e}")
+        return "ERROR"
+
+    finally:
+        conn.close()
+
+def set_videos_watched_by_playlist(username, playlist_id, watched):
+    conn, cursor = db_connect(username)
+
+    try:
+        cursor.execute("UPDATE videos SET is_watched = ? WHERE playlist_id = ?", (watched, playlist_id))
+        conn.commit()
+
+        rows_updated = cursor.rowcount
+        if rows_updated > 0:
+            return "SUCCESS"
+        else:
+            return "NOT_FOUND"
+
+    except sqlite3.Error as e:
+        print(f"Database error while updating the video: {e}")
+        return "ERROR"
+
+    finally:
+        conn.close()
+
 ### v-- TO-DO --v
+
 def insert_or_update_videos(username, videos):
     conn, cursor = db_connect(username)
 
@@ -476,15 +529,3 @@ def insert_or_update_videos(username, videos):
             )
     conn.commit()
     conn.close()
-
-def watch_video(username, video_id, unwatch=False):
-    conn, cursor = db_connect(username)
-    cursor.execute("UPDATE videos SET is_watched = (?) WHERE id = (?)", (not unwatch, video_id))
-    conn.commit()
-    conn.close()
-
-def is_video_watched(username, video_id):
-    conn, cursor = db_connect(username)
-    row = cursor.execute("SELECT is_watched FROM videos WHERE id = (?)", (video_id,)).fetchone()
-    conn.close()
-    return row["is_watched"] if row else None
