@@ -332,23 +332,19 @@ document.querySelector(".refresh-all-btn")?.addEventListener("click", async (eve
             }
         }
 
-        /// Refresh videos by playlist
-        for (const [index, playlistId] of playlistIds.entries()) {
-            button.textContent = `Refreshing... (${index+1}/${total})`
+        /// Refresh videos
+        response = await fetch("/api/videos", {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ playlist_ids: playlistIds })
+        });
 
-            response = await fetch("/api/videos", {
-                method: "PUT",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ playlist_id: playlistId })
-            });
-
-            if (!response.ok) {
-                if (response.status === 401)
-                    return handleUnauthorized();
-                if (response.status === 500) {
-                    button.textContent = "Refresh all";
-                    return handleInternalServerError();
-                }
+        if (!response.ok) {
+            if (response.status === 401)
+                return handleUnauthorized();
+            if (response.status === 500) {
+                button.textContent = "Refresh all";
+                return handleInternalServerError();
             }
         }
 

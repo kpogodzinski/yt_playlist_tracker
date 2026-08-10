@@ -559,24 +559,18 @@ def save_videos_by_playlist():
         return jsonify({"status": "error", "message": "Internal database error"}), 500
 
 @app.route("/api/videos", methods=["PUT"])
-def sync_videos_by_playlist():
+def sync_videos_by_playlists():
     if "user_id" not in session:
         return jsonify({"status": "error", "message": "Unauthorized"}), 401
 
     data = request.get_json()
-    playlist_id = data["playlist_id"]
+    playlist_ids = data["playlist_ids"]
 
-    videos = yt.get_videos_by_playlist(playlist_id)
-    existing_ids = db.get_videos_ids_by_playlist(session["username"], playlist_id)
-    existing_videos = [v for v in videos if v["id"] in existing_ids]
-    new_videos = [v for v in videos if v["id"] not in existing_ids]
+    videos = []
+    for playlist_id in playlist_ids:
+        videos.extend(yt.get_videos_by_playlist(playlist_id))
 
-    status = db.save_videos(session["username"], new_videos)
-
-    if status == "ERROR":
-        return jsonify({"status": "error", "message": "Internal database error"}), 500
-
-    status = db.update_videos(session["username"], existing_videos)
+    status = db.upsert_videos(session["username"], videos)
 
     if status == "SUCCESS":
         return jsonify({"status": "success", "message": "Videos updated"}), 200

@@ -492,31 +492,34 @@ def save_videos(username, videos):
     finally:
         conn.close()
 
-def update_videos(username, videos):
+def upsert_videos(username, videos):
     conn, cursor = db_connect(username)
     rowcount = 0
 
     try:
         for video in videos:
             cursor.execute("""
-                UPDATE videos 
-                SET 
-                    title = ?,
-                    description = ?,
-                    thumbnail = ?,
-                    duration = ?,
-                    published = ?,
-                    position = ?
-                WHERE id = ?
-            """, (
-                video["title"],
-                video["description"],
-                video["thumbnail"],
-                video["duration"],
-                video["published"],
-                video["position"],
-                video["id"]
-            ))
+                INSERT INTO videos (id, playlist_id, position, title, description, thumbnail, duration, published)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                ON CONFLICT(id) DO UPDATE SET
+                playlist_id = excluded.playlist_id,
+                position = excluded.position,
+                title = excluded.title,
+                description = excluded.description,
+                thumbnail = excluded.thumbnail,
+                duration = excluded.duration,
+                published = excluded.published
+                """, (
+                    video["id"],
+                    video["playlist_id"],
+                    video["position"],
+                    video["title"],
+                    video["description"],
+                    video["thumbnail"],
+                    video["duration"],
+                    video["published"]
+                )
+            )
             rowcount += cursor.rowcount
         conn.commit()
 
