@@ -510,11 +510,10 @@ def get_videos():
     playlist_id = request.args.get("playlist_id")
 
     if playlist_id:
-        response = get_playlist(playlist_id)
-        exists = response[1] == 200
+        playlist = db.get_playlist(session["username"], playlist_id)
 
-        if not exists:
-            return response[0].get_json(), response[1]
+        if playlist is None:
+            return jsonify({"status": "error", "message": "Playlist not found"}), 404
 
         videos = db.get_videos_by_playlist(session["username"], playlist_id)
 
