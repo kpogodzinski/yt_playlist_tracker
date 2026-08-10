@@ -332,18 +332,6 @@ def playlist_details(playlist_id):
                            total_videos=total_videos,
                            videos_hide_watched=videos_hide_watched)
 
-@app.route("/fetch_playlist/<playlist_id>", methods=["POST"])
-def fetch_playlist(playlist_id):
-    if "user_id" not in session:
-        return redirect(url_for("login"))
-
-    playlist = yt.get_playlist(playlist_id)
-    db.update_playlist(session["username"], playlist_id, playlist["title"], playlist["description"], playlist["thumbnail"], playlist["created"])
-    videos = yt.get_videos_by_playlist(playlist_id)
-    db.insert_or_update_videos(session["username"], videos)
-
-    return jsonify({"status": "success"})
-
 @app.route("/set_preference", methods=["POST"])
 def set_preference():
     if "user_id" not in session:
@@ -416,6 +404,7 @@ def save_channel():
     channel = yt.get_channel(channel_id)
 
     status = db.save_channel(session["username"], channel_id, channel["name"], channel["thumbnail"])
+
     if status == "SUCCESS":
         return jsonify({"status": "success", "message": "Channel saved"}), 201
     elif status == "EXISTS":
@@ -454,10 +443,34 @@ def save_playlist():
         playlist["thumbnail"],
         playlist["created"]
     )
+
     if status == "SUCCESS":
         return jsonify({"status": "success", "message": "Playlist saved"}), 201
     elif status == "EXISTS":
         return jsonify({"status": "error", "message": "Playlist already exists"}), 409
+    elif status == "ERROR":
+        return jsonify({"status": "error", "message": "Internal database error"}), 500
+
+@app.route("/api/playlists/<playlist_id>", methods=["PUT"])
+def update_playlist(playlist_id):
+    if "user_id" not in session:
+        return jsonify({"status": "error", "message": "Unauthorized"}), 401
+
+    playlist = yt.get_playlist(playlist_id)
+
+    status = db.update_playlist(
+        session["username"],
+        playlist_id,
+        playlist["title"],
+        playlist["description"],
+        playlist["thumbnail"],
+        playlist["created"]
+    )
+
+    if status == "SUCCESS":
+        return jsonify({"status": "success", "message": "Playlist updated"}), 200
+    elif status == "NOT_FOUND":
+        return jsonify({"status": "error", "message": "Playlist does not exist"}), 404
     elif status == "ERROR":
         return jsonify({"status": "error", "message": "Internal database error"}), 500
 
@@ -467,6 +480,7 @@ def delete_playlist(playlist_id):
         return jsonify({"status": "error", "message": "Unauthorized"}), 401
 
     status = db.delete_playlist(session["username"], playlist_id)
+
     if status == "SUCCESS":
         return jsonify({"status": "success", "message": "Playlist deleted"}), 200
     elif status == "NOT_FOUND":
@@ -511,18 +525,47 @@ def get_videos():
     return jsonify({"status": "success", "data": videos}), 200
 
 @app.route("/api/videos", methods=["POST"])
-def save_videos():
+def save_videos_by_playlist():
     if "user_id" not in session:
         return jsonify({"status": "error", "message": "Unauthorized"}), 401
 
-    playlist_id = request.get_json().get("playlist_id")
+    data = request.get_json()
+    playlist_id = data["playlist_id"]
     videos = yt.get_videos_by_playlist(playlist_id)
 
     status = db.save_videos(session["username"], videos)
+
     if status == "SUCCESS":
         return jsonify({"status": "success", "message": "Videos saved"}), 201
-    elif status == "EXISTS":
+    elif status == "PARTIAL":
         return jsonify({"status": "success", "message": "Some videos already exist"}), 200
+    elif status == "ERROR":
+        return jsonify({"status": "error", "message": "Internal database error"}), 500
+
+@app.route("/api/videos", methods=["PUT"])
+def sync_videos_by_playlist():
+    if "user_id" not in session:
+        return jsonify({"status": "error", "message": "Unauthorized"}), 401
+
+    data = request.get_json()
+    playlist_id = data["playlist_id"]
+
+    videos = yt.get_videos_by_playlist(playlist_id)
+    existing_ids = db.get_videos_ids_by_playlist(session["username"], playlist_id)
+    existing_videos = [v for v in videos if v["id"] in existing_ids]
+    new_videos = [v for v in videos if v["id"] not in existing_ids]
+
+    status = db.save_videos(session["username"], new_videos)
+
+    if status == "ERROR":
+        return jsonify({"status": "error", "message": "Internal database error"}), 500
+
+    status = db.update_videos(session["username"], existing_videos)
+
+    if status == "SUCCESS":
+        return jsonify({"status": "success", "message": "Videos updated"}), 200
+    elif status == "PARTIAL":
+        return jsonify({"status": "success", "message": "Some videos not updated"}), 200
     elif status == "ERROR":
         return jsonify({"status": "error", "message": "Internal database error"}), 500
 

@@ -32,7 +32,7 @@
         </button>
     {% endif %}
     {% if playlist.id in saved_playlists %}
-        <button class="fetch-btn" data-playlist="{{ playlist.id }}">Refresh playlist</button>
+        <button class="refresh-btn" data-playlist_id="{{ playlist.id }}">Refresh</button>
     {% endif %}
     <button class="playlist-details-btn">&#9432; Info</button>
     <button class="youtube-btn danger-btn" data-type="playlist" data-id="{{ playlist.id }}">&#9654; Open on YouTube</button>

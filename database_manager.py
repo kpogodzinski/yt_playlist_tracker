@@ -418,8 +418,15 @@ def get_videos_by_playlist(username, playlist_id):
     conn.close()
     return rows
 
+def get_videos_ids_by_playlist(username, playlist_id):
+    conn, cursor = db_connect(username)
+    rows = cursor.execute("SELECT id FROM videos WHERE playlist_id = ?", (playlist_id,)).fetchall()
+    conn.close()
+    return {row["id"] for row in rows}
+
 def save_videos(username, videos):
     conn, cursor = db_connect(username)
+    rowcount = 0
 
     try:
         for video in videos:
@@ -437,16 +444,56 @@ def save_videos(username, videos):
                     video["published"]
                 )
             )
+            rowcount += cursor.rowcount
         conn.commit()
 
-        rows_inserted = cursor.rowcount
-        if rows_inserted == len(videos):
+        if rowcount == len(videos):
             return "SUCCESS"
         else:
-            return "EXISTS"
+            return "PARTIAL"
 
     except sqlite3.Error as e:
         print(f"Database error while saving the videos: {e}")
+        return "ERROR"
+
+    finally:
+        conn.close()
+
+def update_videos(username, videos):
+    conn, cursor = db_connect(username)
+    rowcount = 0
+
+    try:
+        for video in videos:
+            cursor.execute("""
+                UPDATE videos 
+                SET 
+                    title = ?,
+                    description = ?,
+                    thumbnail = ?,
+                    duration = ?,
+                    published = ?,
+                    position = ?
+                WHERE id = ?
+            """, (
+                video["title"],
+                video["description"],
+                video["thumbnail"],
+                video["duration"],
+                video["published"],
+                video["position"],
+                video["id"]
+            ))
+            rowcount += cursor.rowcount
+        conn.commit()
+
+        if rowcount == len(videos):
+            return "SUCCESS"
+        else:
+            return "PARTIAL"
+
+    except sqlite3.Error as e:
+        print(f"Database error while updating the videos: {e}")
         return "ERROR"
 
     finally:
@@ -497,35 +544,3 @@ def set_videos_watched_by_playlist(username, playlist_id, watched):
 
     finally:
         conn.close()
-
-### v-- TO-DO --v
-
-def insert_or_update_videos(username, videos):
-    conn, cursor = db_connect(username)
-
-    for video in videos:
-        try:
-            cursor.execute(
-                "INSERT INTO videos (id, playlist_id, position, title, description, thumbnail, duration, published) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-                (video["id"], video["playlist_id"], video["position"],
-                 video["title"], video["description"], video["thumbnail"], video["duration"], video["published"])
-            )
-        except sqlite3.IntegrityError:
-            print(f"Video {video['id']} already exists. Updating metadata.")
-            cursor.execute(
-                """
-                UPDATE videos 
-                SET playlist_id = ?, 
-                    position = ?, 
-                    title = ?,
-                    description = ?,
-                    thumbnail = ?, 
-                    duration = ?, 
-                    published = ?
-                WHERE id = ?
-                """,
-                (video["playlist_id"], video["position"], video["title"], video["description"],
-                 video["thumbnail"], video["duration"], video["published"], video["id"])
-            )
-    conn.commit()
-    conn.close()

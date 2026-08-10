@@ -94,7 +94,7 @@ document.querySelectorAll(".save-btn").forEach(button => {
     });
 });
 
-document.querySelectorAll(".del-btn").forEach(button => {
+document.querySelectorAll(".delete-btn").forEach(button => {
     button.addEventListener("click", async (event) => {
         event.preventDefault();
         event.stopPropagation();
@@ -254,33 +254,58 @@ document.querySelector(".watchall-btn")?.addEventListener("click", async (event)
     }
 });
 
-///// vvv TO-DO vvv /////
+document.querySelector(".refresh-btn")?.addEventListener("click", async (event) => {
+    event.preventDefault();
+    event.stopPropagation();
 
-document.querySelectorAll(".fetch-btn").forEach(button => {
-    button.addEventListener("click", () => {
-        const playlistId = button.dataset.playlist
+    const button = event.currentTarget;
+    const playlistId = button.dataset.playlist_id;
 
-        LOADER.style.display = "flex";
-        button.disabled = true;
-        button.textContent = "Refreshing..."
+    LOADER.style.display = "flex";
+    button.disabled = true;
+    button.textContent = "Refreshing...";
 
-        fetch(`/fetch_playlist/${playlistId}`, {method: "POST"})
-        .then(response => response.json())
-        .then(data => {
-            if (data.status === "success") {
-                button.textContent = "Refreshed!"
-                button.disabled = false
+    try {
+        let response = await fetch(`/api/playlists/${playlistId}`, { method: "PUT" });
+
+        if (!response.ok) {
+            if (response.status === 401)
+                return handleUnauthorized();
+            if (response.status === 404) {
+                alert("This playlist is not saved.")
+                button.textContent = "Refresh";
+                return;
             }
-        })
-        .catch(err => {
-            console.error(err);
-            window.location.reload();
-        })
-        .finally(() => {
-            LOADER.style.display = "none";
-        })
-    })
+            if (response.status === 500)
+                return handleInternalServerError();
+        }
+
+        response = await fetch("/api/videos", {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ playlist_id: playlistId })
+        });
+
+        if (!response.ok) {
+            if (response.status === 401)
+                return handleUnauthorized();
+            if (response.status === 500)
+                return handleInternalServerError();
+        }
+
+        button.textContent = "Refreshed!";
+    }
+    catch (error) {
+        console.error("An error occurred: ", error);
+        button.textContent = "Error";
+    }
+    finally {
+        LOADER.style.display = "none";
+        button.disabled = false;
+    }
 });
+
+///// vvv TO-DO vvv /////
 
 document.querySelectorAll(".fetchall-btn").forEach(button => {
     button.addEventListener("click", async () => {
