@@ -317,7 +317,7 @@ def get_playlist(username, playlist_id):
     conn.close()
     return row
 
-def get_playlists_ids(username):
+def get_playlist_ids(username):
     conn, cursor = db_connect(username)
     rows = cursor.execute("SELECT id FROM playlists").fetchall()
     conn.close()
@@ -370,6 +370,39 @@ def update_playlist(username, playlist_id, title, description, thumbnail, create
             return "SUCCESS"
         else:
             return "NOT_FOUND"
+
+    except sqlite3.Error as e:
+        print(f"Database error while updating the playlist: {e}")
+        return "ERROR"
+
+    finally:
+        conn.close()
+
+def update_playlists(username, playlists):
+    conn, cursor = db_connect(username)
+    rowcount = 0
+
+    try:
+        for playlist in playlists:
+            cursor.execute("""
+                    UPDATE playlists 
+                    SET (title, description, thumbnail, created) = (?, ?, ?, ?) 
+                    WHERE id = ?
+                """, (
+                    playlist["title"],
+                    playlist["description"],
+                    playlist["thumbnail"],
+                    playlist["created"],
+                    playlist["playlist_id"]
+                )
+            )
+            rowcount += cursor.rowcount
+        conn.commit()
+
+        if rowcount == len(playlists):
+            return "SUCCESS"
+        else:
+            return "PARTIAL"
 
     except sqlite3.Error as e:
         print(f"Database error while updating the playlist: {e}")

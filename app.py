@@ -249,7 +249,7 @@ def search_channel(channel_id):
     playlists = playlists["playlists"]
     channel_name = playlists[0]["channel_name"] if playlists else None
 
-    saved_playlists = db.get_playlists_ids(session["username"])
+    saved_playlists = db.get_playlist_ids(session["username"])
     if search_playlists_hide_saved:
         playlists = [p for p in playlists if p["id"] not in saved_playlists]
     visible_playlists = len(playlists)
@@ -284,7 +284,7 @@ def playlist_details(playlist_id):
         return redirect(url_for("login"))
 
     videos_hide_watched = db.get_preferences(session["user_id"])["videos_hide_watched"]
-    saved_playlists = db.get_playlists_ids(session["username"])
+    saved_playlists = db.get_playlist_ids(session["username"])
 
     if playlist_id in saved_playlists:
         playlist_data = db.get_playlist(session["username"], playlist_id)
@@ -471,6 +471,23 @@ def update_playlist(playlist_id):
         return jsonify({"status": "success", "message": "Playlist updated"}), 200
     elif status == "NOT_FOUND":
         return jsonify({"status": "error", "message": "Playlist does not exist"}), 404
+    elif status == "ERROR":
+        return jsonify({"status": "error", "message": "Internal database error"}), 500
+
+@app.route("/api/playlists", methods=["PUT"])
+def update_playlists():
+    if "user_id" not in session:
+        return jsonify({"status": "error", "message": "Unauthorized"}), 401
+
+    playlist_ids = db.get_playlist_ids(session["username"])
+    playlists = yt.get_playlists(playlist_ids)
+
+    status = db.update_playlists(session["username"], playlists)
+
+    if status == "SUCCESS":
+        return jsonify({"status": "success", "message": "Playlists updated"}), 200
+    elif status == "PARTIAL":
+        return jsonify({"status": "success", "message": "Some playlists not updated"}), 200
     elif status == "ERROR":
         return jsonify({"status": "error", "message": "Internal database error"}), 500
 

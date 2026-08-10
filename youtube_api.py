@@ -47,6 +47,35 @@ def get_playlist(playlist_id):
     }
     return data
 
+def get_playlists(playlist_ids):
+    playlists = []
+    url = "https://www.googleapis.com/youtube/v3/playlists"
+
+    for batch in _batch(playlist_ids, 50):
+        params = {
+            "part": "snippet,contentDetails",
+            "id": ",".join(batch),
+            "key": YOUTUBE_API_KEY
+        }
+
+        response = requests.get(url, params=params)
+        for item in response.json()["items"]:
+            snippet = item["snippet"]
+            contentDetails = item["contentDetails"]
+            data = {
+                "playlist_id": item.get("id"),
+                "channel_id": snippet.get("channelId"),
+                "channel_name": snippet.get("channelTitle"),
+                "title": snippet.get("title"),
+                "description": snippet.get("description"),
+                "thumbnail": snippet.get("thumbnails").get("high").get("url"),
+                "created": isoparse(snippet.get("publishedAt")).strftime("%d %B %Y"),
+                "count": contentDetails.get("itemCount")
+            }
+            playlists.append(data)
+
+    return playlists
+
 def get_playlists_by_channel(channel_id):
     playlists = []
     url = "https://www.googleapis.com/youtube/v3/playlists"

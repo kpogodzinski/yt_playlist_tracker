@@ -188,7 +188,7 @@ document.querySelectorAll(".watch-btn").forEach(button => {
     });
 });
 
-document.querySelector(".watchall-btn")?.addEventListener("click", async (event) => {
+document.querySelector(".watch-all-btn")?.addEventListener("click", async (event) => {
     event.preventDefault();
     event.stopPropagation();
 
@@ -305,42 +305,66 @@ document.querySelector(".refresh-btn")?.addEventListener("click", async (event) 
     }
 });
 
-///// vvv TO-DO vvv /////
+document.querySelector(".refresh-all-btn")?.addEventListener("click", async (event) => {
+    event.preventDefault();
+    event.stopPropagation();
 
-document.querySelectorAll(".fetchall-btn").forEach(button => {
-    button.addEventListener("click", async () => {
-        const playlists = button.dataset.playlists.split(",").filter(id => id)
-        const total = playlists.length
-        if (total < 1) return
+    const button = event.currentTarget;
+    const playlistIds = button.dataset.playlist_ids.split(",").filter(id => id)
+    const total = playlistIds.length;
 
-        LOADER.style.display = "flex";
-        button.disabled = true
-        button.textContent = "Refreshing..."
+    if (total < 1)
+        return;
 
-        let current = 1
-        for (const id of playlists) {
-            try {
-                button.textContent = `Refreshing... (${current}/${total})`
-                const response = await fetch(`/fetch_playlist/${id}`, { method: "POST" })
-                const data = await response.json()
-                if (data.status === "success") {
-                    current += 1
-                }
-                else {
-                    console.log(data);
-                }
-            }
-            catch (err) {
-                console.error(err);
-                window.location.reload();
+    LOADER.style.display = "flex";
+    button.disabled = true
+    button.textContent = "Refreshing..."
+
+    try {
+        /// Refresh all playlists metadata at once
+        let response = await fetch("/api/playlists", { method: "PUT" });
+        if (!response.ok) {
+            if (response.status === 401)
+                return handleUnauthorized();
+            if (response.status === 500) {
+                button.textContent = "Refresh all";
+                return handleInternalServerError();
             }
         }
 
-        button.textContent = "Refreshed!"
-        button.disabled = false
+        /// Refresh videos by playlist
+        for (const [index, playlistId] of playlistIds.entries()) {
+            button.textContent = `Refreshing... (${index+1}/${total})`
+
+            response = await fetch("/api/videos", {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ playlist_id: playlistId })
+            });
+
+            if (!response.ok) {
+                if (response.status === 401)
+                    return handleUnauthorized();
+                if (response.status === 500) {
+                    button.textContent = "Refresh all";
+                    return handleInternalServerError();
+                }
+            }
+        }
+
+        button.textContent = "Refreshed!";
+    }
+    catch (error) {
+        console.error("An error occurred: ", error);
+        button.textContent = "Error";
+    }
+    finally {
         LOADER.style.display = "none";
-    })
+        button.disabled = false;
+    }
 });
+
+///// vvv TO-DO vvv /////
 
 document.querySelectorAll(".playlist-details-btn").forEach(button => {
     button.addEventListener("click", (event) => {

@@ -23,7 +23,7 @@
         {% endif %}
     </button>
     {% if total_videos > 0 %}
-        <button class="watchall-btn{% if playlist.progress == 100 %} watched{% endif %}" data-playlist_id="{{ playlist.id }}">
+        <button class="watch-all-btn{% if playlist.progress == 100 %} watched{% endif %}" data-playlist_id="{{ playlist.id }}">
             {% if playlist.progress == 100 %}
                 Unwatch all
             {% else %}
