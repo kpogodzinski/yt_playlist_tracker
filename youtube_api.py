@@ -228,20 +228,24 @@ def _get_videos_durations_and_dates(ids):
     return video_durations, video_dates
 
 def _parse_duration(duration):
-    pattern = re.compile(r"PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?")
+    pattern = re.compile(r"P(?:(\d+)D)?(?:T(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?)?")
     match = pattern.match(duration)
     if not match:
-        return 0, 0, 0
+        return "00:00"
 
-    h, m, s = match.groups()
+    d, h, m, s = match.groups()
+    d = int(d or 0)
     h = int(h or 0)
     m = int(m or 0)
     s = int(s or 0)
 
+    if d > 0:
+        return f"{d}:{h:02}:{m:02}:{s:02}"
+
     if h > 0:
         return f"{h}:{m:02}:{s:02}"
-    else:
-        return f"{m:02}:{s:02}"
+
+    return f"{m:02}:{s:02}"
 
 def _batch(iterable, n=50):
     it = iter(iterable)

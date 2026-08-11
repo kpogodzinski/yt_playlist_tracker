@@ -34,21 +34,20 @@
     {% if playlist.id in saved_playlists %}
         <button class="refresh-btn" data-playlist_id="{{ playlist.id }}">Refresh</button>
     {% endif %}
-    <button class="playlist-details-btn">&#9432; Info</button>
+    <button class="playlist-info-btn">&#9432; Info</button>
+    <script id="playlist-info" type="application/json">
+        {{ dict(playlist,  channel_name=channel_name) | tojson }}
+    </script>
     <button class="youtube-btn danger-btn" data-type="playlist" data-id="{{ playlist.id }}">&#9654; Open on YouTube</button>
 
     <!-- BEGIN POPUP -->
     <div class="popup" id="popup">
         <div class="popup-content">
             <button id="closePopup">&times;</button>
-            <h1>{{ playlist.title }}</h1>
-            <p class="details">
-                Created: {{ playlist.created }} •
-                {{ playlist.count }} video{% if playlist.count != 1 %}s{% endif %} •
-                {{ channel_name }}
-            </p>
+            <h1 id="title"></h1>
+            <p id="details"></p>
             <h3>Description:</h3>
-            <p class="description">{{ playlist.description }}</p>
+            <p id="description"></p>
         </div>
     </div>
     <!-- END POPUP -->
@@ -67,14 +66,20 @@
                     <p class="duration">{{ video.duration }}</p>
                 </div>
                 <p class="published">Published: {{ video.published }}</p>
-                <button class="watch-btn{% if video.is_watched %} watched{% endif %}"
-                        data-video_id="{{ video.id }}">
-                    {% if video.is_watched %}
-                        Watched
-                    {% else %}
-                        Not watched
-                    {% endif %}
-                </button>
+                <div class="video-buttons">
+                    <button class="watch-btn{% if video.is_watched %} watched{% endif %}"
+                            data-video_id="{{ video.id }}">
+                        {% if video.is_watched %}
+                            Watched
+                        {% else %}
+                            Not watched
+                        {% endif %}
+                    </button>
+                    <button class="video-info-btn" data-video_id="{{ video.id }}">&#9432;</button>
+                </div>
+                <script id="video-info-{{ video.id }}" type="application/json">
+                    {{ dict(video, channel_name=channel_name) | tojson }}
+                </script>
             </div>
         {% endfor %}
     </div>

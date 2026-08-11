@@ -173,6 +173,18 @@ form button, form select, .pagination a.button {
     font-weight: bold;
 }
 
+.video-buttons {
+    display: flex;
+    width: 100%;
+    flex-direction: row;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.video-buttons .watch-btn {
+    flex-grow: 1;
+}
+
 .popup {
     display: flex;
     position: fixed;
@@ -209,11 +221,11 @@ form button, form select, .pagination a.button {
     transform: translateY(0px);
 }
 
-.popup .details {
+.popup #details {
     color: #777777;
 }
 
-.popup .description {
+.popup #description {
     white-space: pre-line;
     text-align: justify;
 }

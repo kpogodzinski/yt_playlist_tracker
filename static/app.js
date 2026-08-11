@@ -10,6 +10,26 @@ function handleInternalServerError() {
     alert("Internal server error occurred.");
 }
 
+function parseDuration(duration) {
+    const units = ["second", "minute", "hour", "day"];
+
+    return duration
+        .split(':')
+        .reverse()
+        .map((val, index) => {
+          const num = parseInt(String(val), 10) || 0;
+          if (num === 0)
+              return ""
+
+          const unit = units[index] || "unknown";
+          const suffix = (num === 1 || unit === "unknown") ? "" : "s";
+
+          return `${num} ${unit}${suffix}`;
+        })
+        .reverse()
+        .join(' ');
+}
+
 document.querySelectorAll(".save-btn").forEach(button => {
     button.addEventListener("click", async (event) => {
         event.preventDefault();
@@ -360,22 +380,43 @@ document.querySelector(".refresh-all-btn")?.addEventListener("click", async (eve
     }
 });
 
-///// vvv TO-DO vvv /////
+document.querySelector(".playlist-info-btn")?.addEventListener("click", (event) => {
+    event.preventDefault();
+    event.stopPropagation();
 
-document.querySelectorAll(".playlist-details-btn").forEach(button => {
+    const playlist = JSON.parse(document.getElementById("playlist-info").textContent);
+
+    const plural = () => playlist["count"] === 1 ? "" : "s";
+
+    document.getElementById("closePopup").onclick = () => POPUP.classList.remove("visible")
+    document.getElementById("title").textContent = playlist["title"];
+    document.getElementById("description").textContent = playlist["description"];
+    document.getElementById("details").textContent =
+        `Created: ${playlist["created"]} •
+        ${playlist["count"]} video${plural()} •
+        ${playlist["channel_name"]}`;
+
+    POPUP.classList.add("visible");
+});
+
+document.querySelectorAll(".video-info-btn").forEach(button => {
     button.addEventListener("click", (event) => {
         event.preventDefault();
         event.stopPropagation();
 
-        // POPUP.style.display = "flex";
-        POPUP.classList.add("visible");
+        const video = JSON.parse(document.getElementById(`video-info-${button.dataset.video_id}`).textContent);
 
-        document.getElementById("closePopup").onclick = () => {
-            POPUP.classList.remove("visible");
-            // POPUP.style.display = "none";
-        }
-    })
-})
+        document.getElementById("closePopup").onclick = () => POPUP.classList.remove("visible")
+        document.getElementById("title").textContent = video["title"];
+        document.getElementById("description").textContent = video["description"];
+        document.getElementById("details").textContent =
+            `${parseDuration(video["duration"])} •
+            ${video["published"]} •
+            ${video["channel_name"]}`;
+
+        POPUP.classList.add("visible");
+    });
+});
 
 document.querySelectorAll(".youtube-btn").forEach(button => {
     button.addEventListener("click", (event) => {
@@ -400,8 +441,10 @@ document.querySelectorAll(".youtube-btn").forEach(button => {
             // noinspection SpellCheckingInspection
             window.open(url, "_blank", "noopener, noreferrer");
         }
-    })
-})
+    });
+});
+
+///// vvv TO-DO vvv /////
 
 document.querySelectorAll(".preference-form select").forEach(select => {
     select.addEventListener("change", () => {

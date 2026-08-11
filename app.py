@@ -287,8 +287,9 @@ def playlist_details(playlist_id):
     saved_playlists = db.get_playlist_ids(session["username"])
 
     if playlist_id in saved_playlists:
-        playlist_data = db.get_playlist(session["username"], playlist_id)
+        playlist_data = dict(db.get_playlist(session["username"], playlist_id))
         videos = db.get_videos_by_playlist(session["username"], playlist_id)
+        videos = [dict(v) for v in videos]
         channel_id = playlist_data["channel_id"]
         channel_name = db.get_channel(session["username"], playlist_data["channel_id"])["name"] if playlist_data else None
     else:
