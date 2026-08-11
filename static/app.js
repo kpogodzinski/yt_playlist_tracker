@@ -283,7 +283,7 @@ document.querySelector(".refresh-btn")?.addEventListener("click", async (event) 
         response = await fetch("/api/videos", {
             method: "PUT",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ playlist_id: playlistId })
+            body: JSON.stringify({ playlist_ids: [playlistId] })
         });
 
         if (!response.ok) {
