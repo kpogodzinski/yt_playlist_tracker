@@ -57,9 +57,9 @@
     <br /><hr />
 
     <h2>Danger zone</h2>
-    <button class="del-acc-btn danger-btn" id="delete-account-button">Delete account</button>
+    <button class="delete-account-btn danger-btn" id="delete-account-button">Delete account</button>
 
-    <div id="delete-modal" style="display:none;">
+    <div id="delete-account-modal" style="display:none;">
         {% if messages %}
             {% for category, message in messages %}
                 {% set subcat = category.split(' ') %}
@@ -72,8 +72,8 @@
         {% endif %}
         <label>
             Password:
-            <input type="password" id="delete-password" required />
+            <input type="password" id="confirm-password" required />
         </label>
-        <button class="danger-btn" id="confirm-delete">Delete account</button>
+        <button class="confirm-delete-btn danger-btn" data-user_id="{{ user_id }}">Delete account</button>
     </div>
 {% endblock %}

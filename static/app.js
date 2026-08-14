@@ -1,7 +1,11 @@
 const LOADER = document.getElementById("loader-wrapper")
 const POPUP = document.getElementById("popup")
 
-function handleUnauthorized() {
+function handleBadRequest() {
+    alert("Invalid request. Please try again.");
+}
+
+function handleUnauthorized(){
     alert("User not logged in or session expired.");
     window.location.replace("/login");
 }
@@ -58,6 +62,8 @@ document.querySelectorAll(".save-btn").forEach(button => {
                 });
 
                 if (!response.ok) {
+                    if (response.status === 400)
+                        return handleBadRequest();
                     if (response.status === 401)
                         return handleUnauthorized();
                     if (response.status === 409)
@@ -75,6 +81,8 @@ document.querySelectorAll(".save-btn").forEach(button => {
             });
 
             if (!response.ok) {
+                if (response.status === 400)
+                    return handleBadRequest();
                 if (response.status === 401)
                     return handleUnauthorized();
                 if (response.status === 409) {
@@ -95,6 +103,8 @@ document.querySelectorAll(".save-btn").forEach(button => {
             });
 
             if (!response.ok) {
+                if (response.status === 400)
+                    return handleBadRequest();
                 if (response.status === 401)
                     return handleUnauthorized();
                 if (response.status === 500)
@@ -176,6 +186,8 @@ document.querySelectorAll(".watch-btn").forEach(button => {
             })
 
             if (!response.ok) {
+                if (response.status === 400)
+                    return handleBadRequest();
                 if (response.status === 401)
                     return handleUnauthorized();
                 if (response.status === 404) {
@@ -234,6 +246,8 @@ document.querySelector(".watch-all-btn")?.addEventListener("click", async (event
         });
 
         if (!response.ok) {
+            if (response.status === 400)
+                return handleBadRequest();
             if (response.status === 401)
                 return handleUnauthorized();
             if (response.status === 404) {
@@ -360,6 +374,8 @@ document.querySelector(".refresh-all-btn")?.addEventListener("click", async (eve
         });
 
         if (!response.ok) {
+            if (response.status === 400)
+                return handleBadRequest();
             if (response.status === 401)
                 return handleUnauthorized();
             if (response.status === 500) {
@@ -380,15 +396,17 @@ document.querySelector(".refresh-all-btn")?.addEventListener("click", async (eve
     }
 });
 
+document.getElementById("closePopup")?.addEventListener("click", () => {
+    POPUP.classList.remove("visible");
+});
+
 document.querySelector(".playlist-info-btn")?.addEventListener("click", (event) => {
     event.preventDefault();
     event.stopPropagation();
 
     const playlist = JSON.parse(document.getElementById("playlist-info").textContent);
-
     const plural = () => playlist["count"] === 1 ? "" : "s";
 
-    document.getElementById("closePopup").onclick = () => POPUP.classList.remove("visible")
     document.getElementById("title").textContent = playlist["title"];
     document.getElementById("description").textContent = playlist["description"];
     document.getElementById("details").textContent =
@@ -406,7 +424,6 @@ document.querySelectorAll(".video-info-btn").forEach(button => {
 
         const video = JSON.parse(document.getElementById(`video-info-${button.dataset.video_id}`).textContent);
 
-        document.getElementById("closePopup").onclick = () => POPUP.classList.remove("visible")
         document.getElementById("title").textContent = video["title"];
         document.getElementById("description").textContent = video["description"];
         document.getElementById("details").textContent =
@@ -427,7 +444,8 @@ document.querySelectorAll(".youtube-btn").forEach(button => {
         const id = button.dataset.id;
 
         const confirmed = confirm(`Open this ${type} on YouTube?`);
-        if (!confirmed) return;
+        if (!confirmed)
+            return;
 
         let url = "";
         if (type === "playlist") {
@@ -442,6 +460,68 @@ document.querySelectorAll(".youtube-btn").forEach(button => {
             window.open(url, "_blank", "noopener, noreferrer");
         }
     });
+});
+
+document.querySelector(".delete-account-btn").addEventListener("click", () => {
+    const confirmed = confirm("All your data will be permanently deleted. Are you sure?");
+    if (!confirmed) return;
+
+    document.getElementById("delete-account-button").style.display = "none"
+    document.getElementById("delete-account-modal").style.display = "block";
+
+    window.location.href = "/profile#delete-account-modal";
+});
+
+document.querySelector(".confirm-delete-btn").addEventListener("click", async (event) => {
+    const userId = event.currentTarget.dataset.user_id;
+    const passwordInput = document.getElementById("confirm-password")
+    const password = passwordInput.value;
+
+    try {
+        if (!password) {
+            return;
+        }
+
+        LOADER.style.display = "flex";
+
+        const response = await fetch(`/api/users/${userId}`, {
+            method: "DELETE",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({password: password})
+        });
+
+        if (!response.ok) {
+            if (response.status === 400)
+                return handleBadRequest();
+            if (response.status === 401)
+                return handleUnauthorized();
+            if (response.status === 403) {
+                alert("You don't have permissions to perform this action.");
+                window.location.reload();
+                return;
+            }
+            if (response.status === 404) {
+                alert("The user was not found.");
+                window.location.reload();
+                return;
+            }
+            if (response.status === 422) {
+                alert("The password is incorrect.");
+                passwordInput.value = "";
+                return;
+            }
+            if (response.status === 500)
+                return handleInternalServerError();
+        }
+
+        window.location.replace("/login");
+    }
+    catch (error) {
+        console.error("An error occurred: ", error);
+    }
+    finally {
+        LOADER.style.display = "none";
+    }
 });
 
 ///// vvv TO-DO vvv /////
@@ -504,58 +584,15 @@ document.querySelectorAll(".preference-toggle input[type='checkbox']").forEach(c
     })
 })
 
-document.querySelectorAll(".del-acc-btn").forEach(button => {
-    button.addEventListener("click", () => {
-        const confirmed = confirm("All your data will be permanently deleted. Are you sure?");
-        if (!confirmed) return;
-
-        document.getElementById("delete-account-button").style.display = "none"
-        document.getElementById("delete-modal").style.display = "block";
-
-        window.location.href = "/profile#delete-modal";
-
-        document.getElementById("confirm-delete").onclick = () => {
-            const password = document.getElementById("delete-password").value;
-            if (!password) {
-                LOADER.style.display = "none";
-                return;
-            }
-
-            fetch("/delete_account", {
-                method: "DELETE",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({
-                    password: password
-                })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.status === "success") {
-                    alert("Your account has been deleted.");
-                    window.location.href = "/login";
-                } else if (data.status === "wrong_password") {
-                    alert("Incorrect password.")
-                    window.location.reload()
-                } else {
-                    alert("Something went wrong.")
-                    window.location.reload()
-                }
-            })
-        }
-    })
-})
-
 /// SHOW LOADER WHEN SUBMITTING HTML FORMS AND CLICKING BUTTONS
 document.addEventListener("DOMContentLoaded", () => {
     const forms = document.querySelectorAll(
         "#loginForm, #registerForm, #searchForm, #profileForm, #changePasswordForm"
-    )
+    );
 
     const buttons = document.querySelectorAll(
-        "#confirm-delete"
-    )
+        ".confirm-delete-btn"
+    );
 
     forms.forEach(form => {
         form.addEventListener("submit", () => {

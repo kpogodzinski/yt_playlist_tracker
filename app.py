@@ -8,6 +8,7 @@ import sqlite3
 from os import getenv
 from datetime import timedelta
 from math import ceil
+from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
 app.secret_key = getenv("SECRET_KEY")
@@ -93,6 +94,7 @@ def profile():
     if "user_id" not in session:
         return redirect(url_for("login"))
 
+    user_id = session["user_id"]
     username = session["username"]
     display_name = session["display_name"]
 
@@ -131,7 +133,10 @@ def profile():
     ### DELETE ACCOUNT SECTION ###
     flash("For security reasons, please confirm your password one last time.", "warning delete")
     flash("All your data will be permanently deleted.", "warning delete")
-    return render_template("profile.html", username=username, display_name=display_name)
+    return render_template("profile.html",
+                           user_id=user_id,
+                           username=username,
+                           display_name=display_name)
 
 @app.route("/<channel_id>")
 def channel(channel_id):
@@ -361,26 +366,44 @@ def set_preference():
 
     return jsonify({"status": "error"}), 400
 
-@app.route("/delete_account", methods=["DELETE"])
-def delete_account():
-    if "user_id" not in session:
-        return redirect(url_for("login"))
-
-    password = request.get_json()["password"]
-    if db.check_password(session["username"], password):
-        db.delete_user(session["user_id"])
-        base_dir = os.path.dirname(os.path.abspath(__file__))
-        db_path = os.path.join(base_dir, "databases", f"{session['username']}.db")
-        os.remove(db_path)
-        session.clear()
-        return jsonify({"status": "success"})
-    else:
-        return jsonify({"status": "wrong_password"})
-
 
 ########## BEGIN API ##########
 
 """ USERS """
+@app.route("/api/users/<user_id>", methods=["DELETE"])
+def delete_user(user_id):
+    if "user_id" not in session:
+        return jsonify({"status": "error", "message": "Unauthorized"}), 401
+
+    if str(user_id) != str(session["user_id"]):
+        return jsonify({"status": "error", "message": "Forbidden"}), 403
+
+    data = request.get_json() or {}
+    password = data.get("password")
+
+    if password is None:
+        return jsonify({"status": "error", "message": "Bad request"}), 400
+
+    if not db.check_password(session["username"], password):
+        return jsonify({"status": "error", "message": "Wrong password"}), 422
+
+    status = db.delete_user(user_id)
+
+    if status == "SUCCESS":
+        try:
+            username = secure_filename(session["username"])
+            base_dir = os.path.dirname(os.path.abspath(__file__))
+            db_path = os.path.join(base_dir, "databases", f"{username}.db")
+            if os.path.exists(db_path):
+                os.remove(db_path)
+        except Exception as e:
+            print(f"Error while removing the database file: {e}")
+        session.clear()
+        return jsonify({"status": "success", "message": "User deleted"}), 200
+    elif status == "NOT_FOUND":
+        return jsonify({"status": "error", "message": "User not found"}), 404
+    elif status == "ERROR":
+        return jsonify({"status": "error", "message": "Internal database error"}), 500
 
 """ CHANNELS """
 @app.route("/api/channels/<channel_id>", methods=["GET"])
@@ -401,7 +424,12 @@ def save_channel():
     if "user_id" not in session:
         return jsonify({"status": "error", "message": "Unauthorized"}), 401
 
-    channel_id = request.get_json().get("channel_id")
+    data = request.get_json() or {}
+    channel_id = data.get("channel_id")
+
+    if channel_id is None:
+        return jsonify({"status": "error", "message": "Bad request"}), 400
+
     channel = yt.get_channel(channel_id)
 
     status = db.save_channel(session["username"], channel_id, channel["name"], channel["thumbnail"])
@@ -432,7 +460,12 @@ def save_playlist():
     if "user_id" not in session:
         return jsonify({"status": "error", "message": "Unauthorized"}), 401
 
-    playlist_id = request.get_json().get("playlist_id")
+    data = request.get_json() or {}
+    playlist_id = data.get("playlist_id")
+
+    if playlist_id is None:
+        return jsonify({"status": "error", "message": "Bad request"}), 400
+
     playlist = yt.get_playlist(playlist_id)
 
     status = db.save_playlist(
@@ -546,8 +579,12 @@ def save_videos_by_playlist():
     if "user_id" not in session:
         return jsonify({"status": "error", "message": "Unauthorized"}), 401
 
-    data = request.get_json()
-    playlist_id = data["playlist_id"]
+    data = request.get_json() or {}
+    playlist_id = data.get("playlist_id")
+
+    if playlist_id is None:
+        return jsonify({"status": "error", "message": "Bad request"}), 400
+
     videos = yt.get_videos_by_playlist(playlist_id)
 
     status = db.save_videos(session["username"], videos)
@@ -564,8 +601,11 @@ def sync_videos_by_playlists():
     if "user_id" not in session:
         return jsonify({"status": "error", "message": "Unauthorized"}), 401
 
-    data = request.get_json()
-    playlist_ids = data["playlist_ids"]
+    data = request.get_json() or {}
+    playlist_ids = data.get("playlist_ids")
+
+    if playlist_ids is None:
+        return jsonify({"status": "error", "message": "Bad request"}), 400
 
     videos = []
     for playlist_id in playlist_ids:
@@ -585,7 +625,11 @@ def set_video_watched(video_id):
     if "user_id" not in session:
         return jsonify({"status": "error", "message": "Unauthorized"}), 401
 
-    watched = request.get_json()["watched"]
+    data = request.get_json() or {}
+    watched = data.get("watched")
+
+    if watched is None:
+        return jsonify({"status": "error", "message": "Bad request"}), 400
 
     status = db.set_video_watched(session["username"], video_id, watched)
 
@@ -601,9 +645,12 @@ def set_videos_watched_by_playlist():
     if "user_id" not in session:
         return jsonify({"status": "error", "message": "Unauthorized"}), 401
 
-    data = request.get_json()
-    playlist_id = data["playlist_id"]
-    watched = data["watched"]
+    data = request.get_json() or {}
+    playlist_id = data.get("playlist_id")
+    watched = data.get("watched")
+
+    if playlist_id is None or watched is None:
+        return jsonify({"status": "error", "message": "Bad request"}), 400
 
     status = db.set_videos_watched_by_playlist(session["username"], playlist_id, watched)
 

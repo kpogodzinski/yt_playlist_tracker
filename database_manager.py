@@ -2,9 +2,12 @@ import os
 import sqlite3
 
 from werkzeug.security import generate_password_hash, check_password_hash
+from werkzeug.utils import secure_filename
 
 def db_connect(database=None):
-    conn = sqlite3.connect("databases/test.db" if database is None else f"databases/{database}.db")
+    db_name = secure_filename(database) if database else "test"
+    db_path = f"databases/{db_name}.db"
+    conn = sqlite3.connect(db_path)
     conn.execute("PRAGMA foreign_keys = ON")
     conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
@@ -120,13 +123,21 @@ def set_preference(user_id, preference, value):
 
 def delete_user(user_id):
     conn, cursor = db_connect("users")
+
     try:
         cursor.execute("DELETE FROM preferences WHERE user_id = ?", (user_id,))
         cursor.execute("DELETE FROM users WHERE id = ?", (user_id,))
         conn.commit()
-        return "success"
-    except sqlite3.Error:
-        return "error"
+
+        if cursor.rowcount == 1:
+            return "SUCCESS"
+        else:
+            return "NOT_FOUND"
+
+    except sqlite3.Error as e:
+        print(f"Database error while deleting the user: {e}")
+        return "ERROR"
+
     finally:
         conn.close()
 
