@@ -21,9 +21,10 @@ The application uses the YouTube Data API to fetch channels, playlists and video
 
 - `Flask v3.1.3`
 - `flask-caching v2.3.1`
-- `python-dotenv v1.2.1`
+- `python-dotenv v1.2.2`
+- `python-dateutil v2.9.0.post0`
 - `Werkzeug v3.1.6`
-- `requests v2.32.5`
+- `requests v2.33.0`
 
 ## Database
 
@@ -45,38 +46,35 @@ git clone git@github.com:kpogodzinski/yt_playlist_tracker.git
 cd yt_playlist_tracker
 ```
 
-**Step 3:** Create and activate a virtual environment for Python.
+**Step 3:** Create a virtual environment for Python.
+
+```bash
+python -m venv .venv
+```
+
+**Step 4:** Activate created virtual environment.
 
 _Windows:_
 
 ```bash
-python -m venv .venv
 .venv\Scripts\activate
 ```
 
 _Linux:_
 
 ```bash
-python3 -m venv .venv
 source .venv/bin/activate
 ```
 
-**Step 4:** Install requirements.
-
-_Windows:_
+**Step 5:** Install requirements.
 
 ```bash
 pip install -r requirements.txt
 ```
 
-_Linux:_
-```bash
-python3 -m pip install -r requirements.txt
-```
-
 ## Configuration
 
-Create an `.env` file based on the `.env_example` and fill in required environmental variables:
+Create a `.env` file based on the `.env_example` and fill in required environmental variables:
 - `SECRET_KEY` – used by Flask to sign and secure sessions.
 - `YOUTUBE_API_KEY` – used in YouTube API requests.
 
@@ -100,18 +98,11 @@ Note: Make sure you are in the project directory and your virtual environment is
 
 **Step 1:** Run the server.
 
-_Windows:_
-
 ```bash
 python app.py
 ```
-_Linux:_
 
-```bash
-python3 app.py
-```
-
-**Step 2:** Type in the URL in a web browser.
+**Step 2:** Go to the URL in your web browser.
 
 _If the server is running on local machine:_
 
