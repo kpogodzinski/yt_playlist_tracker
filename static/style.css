@@ -302,18 +302,18 @@ button.danger-btn:disabled {
     cursor: not-allowed;
 }
 
-button.watch-btn, button.watchall-btn {
+button.watch-btn, button.watch-all-btn {
     background-color: inherit;
     color: #304ac3;
     border-color: #304AC3;
 }
 
-button.watch-btn:hover, button.watchall-btn:hover {
+button.watch-btn:hover, button.watch-all-btn:hover {
     background-color: #2e2e2e;
     transform: translateY(-2px);
 }
 
-button.watch-btn.watched, button.watchall-btn.watched {
+button.watch-btn.watched, button.watch-all-btn.watched {
     background-color: #304ac3;
     color: white;
 }
