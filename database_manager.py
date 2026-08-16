@@ -116,10 +116,16 @@ def set_preference(user_id, preference, value):
     try:
         query = f"UPDATE preferences SET {preference} = ? WHERE user_id = ?"
         cursor.execute(query, (value, user_id))
-    except:
-        raise
-    conn.commit()
-    conn.close()
+        conn.commit()
+
+        return "SUCCESS"
+
+    except sqlite3.Error as e:
+        print(f"Database error while saving the preference: {e}")
+        return "ERROR"
+
+    finally:
+        conn.close()
 
 def delete_user(user_id):
     conn, cursor = db_connect("users")

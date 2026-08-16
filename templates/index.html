@@ -22,25 +22,21 @@
         {% if playlists_hide_completed %}
             <p>Total unwatched playlists: {{ visible_playlists }}</p>
         {% endif %}
-        <form class="preference-form" method="POST" action="/set_preference">
-            <label for="playlists_sort_by">Sort by:</label>
-            <select id="playlists_sort_by" name="playlists_sort_by">
-                <option value="date_saved" {% if playlists_sort_by == "date_saved" %}selected{% endif %}>Date saved</option>
-                <option value="last_watched" {% if playlists_sort_by == "last_watched" %}selected{% endif %}>Last watched</option>
-                <option value="title" {% if playlists_sort_by == "title" %}selected{% endif %}>Title</option>
-                <option value="progress" {% if playlists_sort_by == "progress" %}selected{% endif %}>Progress</option>
-            </select>
-        </form>
-        <form class="preference-form" method="POST" action="/set_preference">
-            <label for="playlists_per_page">Playlists per page:</label>
-            <select id="playlists_per_page" name="playlists_per_page">
-                <option value="10" {% if playlists_per_page == 10 %}selected{% endif %}>10</option>
-                <option value="20" {% if playlists_per_page == 20 %}selected{% endif %}>20</option>
-                <option value="30" {% if playlists_per_page == 30 %}selected{% endif %}>30</option>
-                <option value="40" {% if playlists_per_page == 40 %}selected{% endif %}>40</option>
-                <option value="50" {% if playlists_per_page == 50 %}selected{% endif %}>50</option>
-            </select>
-        </form>
+        <label for="playlists_sort_by">Sort by:</label>
+        <select class="preference-select" id="playlists_sort_by" name="playlists_sort_by" data-current-value="{{ playlists_sort_by }}">
+            <option value="date_saved" {% if playlists_sort_by == "date_saved" %}selected{% endif %}>Date saved</option>
+            <option value="last_watched" {% if playlists_sort_by == "last_watched" %}selected{% endif %}>Last watched</option>
+            <option value="title" {% if playlists_sort_by == "title" %}selected{% endif %}>Title</option>
+            <option value="progress" {% if playlists_sort_by == "progress" %}selected{% endif %}>Progress</option>
+        </select>
+        <label for="playlists_per_page">Playlists per page:</label>
+        <select class="preference-select" id="playlists_per_page" name="playlists_per_page" data-current-value="{{ playlists_per_page }}">
+            <option value="10" {% if playlists_per_page == 10 %}selected{% endif %}>10</option>
+            <option value="20" {% if playlists_per_page == 20 %}selected{% endif %}>20</option>
+            <option value="30" {% if playlists_per_page == 30 %}selected{% endif %}>30</option>
+            <option value="40" {% if playlists_per_page == 40 %}selected{% endif %}>40</option>
+            <option value="50" {% if playlists_per_page == 50 %}selected{% endif %}>50</option>
+        </select>
         <label class="toggle-switch preference-toggle">
           <input type="checkbox" name="playlists_hide_completed" {% if playlists_hide_completed %}checked{% endif %}>
           <span class="slider"></span>
@@ -48,7 +44,7 @@
         </label>
         <br />
         <button class="back-btn" onclick="history.back()">&lt; Go back</button>
-        <button class="refresh-all-btn" data-playlist_ids="{{ all_playlist_ids | list | join(',') }}">Refresh all</button>
+        <button class="refresh-all-btn" data-playlist-ids="{{ all_playlist_ids | list | join(',') }}">Refresh all</button>
         <div class="pagination">
             {% if current_page > 1 %}
                 <a class="button" href="/{{ channel_id }}?page={{ current_page - 1 }}">
@@ -80,7 +76,7 @@
                             </div>
                         </div>
                         <button class="delete-btn danger-btn"
-                                data-playlist_id="{{ playlist.id }}">
+                                data-playlist-id="{{ playlist.id }}">
                             Delete
                         </button>
                     </div>

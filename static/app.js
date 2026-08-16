@@ -39,8 +39,8 @@ document.querySelectorAll(".save-btn").forEach(button => {
         event.preventDefault();
         event.stopPropagation();
 
-        const channelId = button.dataset.channel_id;
-        const playlistId = button.dataset.playlist_id;
+        const channelId = button.dataset.channelId;
+        const playlistId = button.dataset.playlistId;
 
         LOADER.style.display = "flex";
         button.textContent = "Saving...";
@@ -132,7 +132,7 @@ document.querySelectorAll(".delete-btn").forEach(button => {
         const confirmed = confirm("Are you sure to delete this playlist?");
         if (!confirmed) return;
 
-        const playlistId = button.dataset.playlist_id;
+        const playlistId = button.dataset.playlistId;
 
         LOADER.style.display = "flex";
         button.textContent = "Deleting...";
@@ -171,7 +171,7 @@ document.querySelectorAll(".watch-btn").forEach(button => {
         event.preventDefault();
         event.stopPropagation();
 
-        const videoId = button.dataset.video_id;
+        const videoId = button.dataset.videoId;
 
         LOADER.style.display = "flex";
         button.textContent = "Please wait...";
@@ -228,10 +228,10 @@ document.querySelector(".watch-all-btn")?.addEventListener("click", async (event
     if (!confirmed) return;
 
     const button = event.currentTarget;
-    const playlistId = button.dataset.playlist_id
+    const playlistId = button.dataset.playlistId;
 
     LOADER.style.display = "flex";
-    button.textContent = "Please wait..."
+    button.textContent = "Please wait...";
 
     try {
         const is_watched = button.classList.contains("watched");
@@ -293,7 +293,7 @@ document.querySelector(".refresh-btn")?.addEventListener("click", async (event) 
     event.stopPropagation();
 
     const button = event.currentTarget;
-    const playlistId = button.dataset.playlist_id;
+    const playlistId = button.dataset.playlistId;
 
     LOADER.style.display = "flex";
     button.disabled = true;
@@ -344,7 +344,7 @@ document.querySelector(".refresh-all-btn")?.addEventListener("click", async (eve
     event.stopPropagation();
 
     const button = event.currentTarget;
-    const playlistIds = button.dataset.playlist_ids.split(",").filter(id => id)
+    const playlistIds = button.dataset.playlistIds.split(",").filter(id => id)
     const total = playlistIds.length;
 
     if (total < 1)
@@ -422,7 +422,7 @@ document.querySelectorAll(".video-info-btn").forEach(button => {
         event.preventDefault();
         event.stopPropagation();
 
-        const video = JSON.parse(document.getElementById(`video-info-${button.dataset.video_id}`).textContent);
+        const video = JSON.parse(document.getElementById(`video-info-${button.dataset.videoId}`).textContent);
 
         document.getElementById("title").textContent = video["title"];
         document.getElementById("description").textContent = video["description"];
@@ -462,7 +462,7 @@ document.querySelectorAll(".youtube-btn").forEach(button => {
     });
 });
 
-document.querySelector(".delete-account-btn").addEventListener("click", () => {
+document.querySelector(".delete-account-btn")?.addEventListener("click", () => {
     const confirmed = confirm("All your data will be permanently deleted. Are you sure?");
     if (!confirmed) return;
 
@@ -472,8 +472,8 @@ document.querySelector(".delete-account-btn").addEventListener("click", () => {
     window.location.href = "/profile#delete-account-modal";
 });
 
-document.querySelector(".confirm-delete-btn").addEventListener("click", async (event) => {
-    const userId = event.currentTarget.dataset.user_id;
+document.querySelector(".confirm-delete-btn")?.addEventListener("click", async (event) => {
+    const userId = event.currentTarget.dataset.userId;
     const passwordInput = document.getElementById("confirm-password")
     const password = passwordInput.value;
 
@@ -524,65 +524,54 @@ document.querySelector(".confirm-delete-btn").addEventListener("click", async (e
     }
 });
 
-///// vvv TO-DO vvv /////
+document.querySelectorAll(".preference-select, .preference-toggle input[type='checkbox']")
+    .forEach(element => {
+        element.addEventListener("change", async () => {
+            const preference = element.name;
+            const isCheckbox = element.type === "checkbox";
+            const oldValue = isCheckbox ? !element.checked : element.dataset.currentValue;
+            const newValue = isCheckbox ? element.checked : element.value;
 
-document.querySelectorAll(".preference-form select").forEach(select => {
-    select.addEventListener("change", () => {
-        const form = select.closest("form");
+            element.disabled = true;
+            LOADER.style.display = "flex";
 
-        LOADER.style.display = "flex";
-        const body = new FormData(form)
-        select.disabled = true;
+            try {
+                const response = await fetch("/api/preferences", {
+                    method: "PUT",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ preference, value: newValue })
+                });
 
-        fetch("/set_preference", { method: "POST", body: body })
-        .then(response => response.json())
-        .then(data => {
-            select.disabled = false;
-            if (data.status === "success") {
-                window.location.reload()
+                if (!response.ok) {
+                    if (isCheckbox)
+                        element.checked = oldValue;
+                    else
+                        element.value = oldValue;
+
+                    if (response.status === 400)
+                        return handleBadRequest();
+                    if (response.status === 401)
+                        return handleUnauthorized();
+                    if (response.status === 500)
+                        return handleInternalServerError();
+                }
+
+                window.location.reload();
             }
-            else if (data.status === "error") {
-                console.error("Something went wrong.")
-            }
-        })
-        .catch(err => {
-            console.error(err);
-            window.location.reload();
-        })
-        .finally(() => {
-            LOADER.style.display = "none";
-        })
-    })
-})
+            catch (error) {
+                if (isCheckbox)
+                    element.checked = oldValue;
+                else
+                    element.value = oldValue;
 
-document.querySelectorAll(".preference-toggle input[type='checkbox']").forEach(checkbox => {
-    checkbox.addEventListener("change", () => {
-        const body = new FormData();
-        body.append(checkbox.name, checkbox.checked ? "1" : "0");
-
-        LOADER.style.display = "flex";
-        checkbox.disabled = true;
-
-        fetch("/set_preference", { method: "POST", body: body })
-        .then(response => response.json())
-        .then(data => {
-            checkbox.disabled = false;
-            if (data.status === "success") {
-                window.location.reload()
+                console.error("An error occurred: ", error);
             }
-            else if (data.status === "error") {
-                console.error("Something went wrong.")
-            }
-        })
-        .catch(err => {
-            console.error(err);
-            window.location.reload();
-        })
-        .finally(() => {
-            LOADER.style.display = "none";
-        })
-    })
-})
+            finally {
+                element.disabled = false;
+                LOADER.style.display = "none";
+        }
+    });
+});
 
 /// SHOW LOADER WHEN SUBMITTING HTML FORMS AND CLICKING BUTTONS
 document.addEventListener("DOMContentLoaded", () => {

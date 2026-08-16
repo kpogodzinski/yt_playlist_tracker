@@ -17,6 +17,7 @@ app.jinja_env.globals.update(ceil=ceil)
 import database_manager as db
 import youtube_api as yt
 import cache as cache
+from preferences import Preference, PREFERENCE_VALIDATORS
 
 cache.cache.init_app(app)
 
@@ -338,38 +339,39 @@ def playlist_details(playlist_id):
                            total_videos=total_videos,
                            videos_hide_watched=videos_hide_watched)
 
-@app.route("/set_preference", methods=["POST"])
-def set_preference():
-    if "user_id" not in session:
-        return redirect(url_for("login"))
-
-    PREFERENCES = [
-        "playlists_sort_by",
-        "playlists_per_page",
-        "playlists_hide_completed",
-        "videos_hide_watched",
-        "search_results_per_page",
-        "search_playlists_per_page",
-        "search_playlists_sort_by",
-        "search_playlists_hide_saved"
-    ]
-
-    for preference in PREFERENCES:
-        value = request.form.get(preference)
-        if value:
-            try:
-                db.set_preference(session["user_id"], preference, value)
-                return jsonify({"status": "success"})
-            except Exception as e:
-                print("Something went wrong. Message: ", e)
-                return jsonify({"status": "error"}), 500
-
-    return jsonify({"status": "error"}), 400
-
-
 ########## BEGIN API ##########
 
 """ USERS """
+@app.route("/api/preferences", methods=["PUT"])
+def set_preference():
+    if "user_id" not in session:
+        return jsonify({"status": "error", "message": "Unauthorized"}), 401
+
+    data = request.get_json() or {}
+    preference_name = data.get("preference")
+    value = data.get("value")
+
+    if preference_name is None or value is None:
+        return jsonify({"status": "error", "message": "Bad request"}), 400
+
+    try:
+        preference = Preference(preference_name)
+    except ValueError:
+        return jsonify({"status": "error", "message": "Unknown preference"}), 400
+
+    validator = PREFERENCE_VALIDATORS.get(preference)
+    if validator is None:
+        return jsonify({"status": "error", "message": "No validator for preference"}), 500
+    if not validator(value):
+        return jsonify({"status": "error", "message": "Invalid preference value"}), 400
+
+    status = db.set_preference(session["user_id"], preference.value, value)
+
+    if status == "SUCCESS":
+        return jsonify({"status": "success", "message": "Preference saved"}), 200
+    if status == "ERROR":
+        return jsonify({"status": "error", "message": "Internal database error"}), 500
+
 @app.route("/api/users/<user_id>", methods=["DELETE"])
 def delete_user(user_id):
     if "user_id" not in session:
