@@ -524,7 +524,7 @@ document.querySelector(".confirm-delete-btn")?.addEventListener("click", async (
     }
 });
 
-document.querySelectorAll(".preference-select, .preference-toggle input[type='checkbox']")
+document.querySelectorAll(".preference-select select, .preference-toggle input[type='checkbox']")
     .forEach(element => {
         element.addEventListener("change", async () => {
             const preference = element.name;

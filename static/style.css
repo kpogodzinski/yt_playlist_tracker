@@ -318,6 +318,11 @@ button.watch-btn.watched, button.watchall-btn.watched {
     color: white;
 }
 
+.preference-select, .preference-toggle {
+    margin-right: 8px;
+    white-space: nowrap;
+}
+
 .toggle-switch {
     margin: 10px;
     display: inline-flex;

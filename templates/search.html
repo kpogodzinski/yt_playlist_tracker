@@ -13,14 +13,16 @@
         <hr />
         <h2>Found channels</h2>
         <p>Total results: <strong>{{ total_results }}</strong></p>
-        <label for="search_results_per_page">Results per page:</label>
-        <select class="preference-select" id="search_results_per_page" name="search_results_per_page" data-current-value="{{ search_results_per_page }}">
-            <option value="10" {% if search_results_per_page == 10 %}selected{% endif %}>10</option>
-            <option value="20" {% if search_results_per_page == 20 %}selected{% endif %}>20</option>
-            <option value="30" {% if search_results_per_page == 30 %}selected{% endif %}>30</option>
-            <option value="40" {% if search_results_per_page == 40 %}selected{% endif %}>40</option>
-            <option value="50" {% if search_results_per_page == 50 %}selected{% endif %}>50</option>
-        </select>
+        <label class="preference-select">
+            Results per page:
+            <select name="search_results_per_page" data-current-value="{{ search_results_per_page }}">
+                <option value="10" {% if search_results_per_page == 10 %}selected{% endif %}>10</option>
+                <option value="20" {% if search_results_per_page == 20 %}selected{% endif %}>20</option>
+                <option value="30" {% if search_results_per_page == 30 %}selected{% endif %}>30</option>
+                <option value="40" {% if search_results_per_page == 40 %}selected{% endif %}>40</option>
+                <option value="50" {% if search_results_per_page == 50 %}selected{% endif %}>50</option>
+            </select>
+        </label>
         <div class="pagination">
             {% if current_page > 1 %}
                 <a class="button" href="/search?q={{ query }}&page={{ current_page - 1 }}">
@@ -60,19 +62,23 @@
             <p>Total unsaved playlists: <strong>{{ visible_playlists }}</strong></p>
         {% endif %}
         <button class="back-btn" onclick="history.back()">&lt; Go back</button><br />
-        <label for="search_playlists_per_page">Playlists per page:</label>
-        <select class="preference-select" id="search_playlists_per_page" name="search_playlists_per_page" data-current-value="{{ search_playlists_per_page }}">
-            <option value="10" {% if search_playlists_per_page == 10 %}selected{% endif %}>10</option>
-            <option value="20" {% if search_playlists_per_page == 20 %}selected{% endif %}>20</option>
-            <option value="30" {% if search_playlists_per_page == 30 %}selected{% endif %}>30</option>
-            <option value="40" {% if search_playlists_per_page == 40 %}selected{% endif %}>40</option>
-            <option value="50" {% if search_playlists_per_page == 50 %}selected{% endif %}>50</option>
-        </select>
-        <label for="search_playlists_sort_by">Sort by:</label>
-        <select class="preference-select" id="search_playlists_sort_by" name="search_playlists_sort_by" data-current-value="{{ search_playlists_sort_by }}">
-            <option value="title" {% if search_playlists_sort_by == "title" %}selected{% endif %}>Title</option>
-            <option value="date_created" {% if search_playlists_sort_by == "date_created" %}selected{% endif %}>Date created</option>
-        </select>
+        <label class="preference-select">
+            Playlists per page:
+            <select name="search_playlists_per_page" data-current-value="{{ search_playlists_per_page }}">
+                <option value="10" {% if search_playlists_per_page == 10 %}selected{% endif %}>10</option>
+                <option value="20" {% if search_playlists_per_page == 20 %}selected{% endif %}>20</option>
+                <option value="30" {% if search_playlists_per_page == 30 %}selected{% endif %}>30</option>
+                <option value="40" {% if search_playlists_per_page == 40 %}selected{% endif %}>40</option>
+                <option value="50" {% if search_playlists_per_page == 50 %}selected{% endif %}>50</option>
+            </select>
+        </label>
+        <label class="preference-select">
+            Sort by:
+            <select name="search_playlists_sort_by" data-current-value="{{ search_playlists_sort_by }}">
+                <option value="title" {% if search_playlists_sort_by == "title" %}selected{% endif %}>Title</option>
+                <option value="date_created" {% if search_playlists_sort_by == "date_created" %}selected{% endif %}>Date created</option>
+            </select>
+        </label>
         <label class="toggle-switch preference-toggle">
           <input type="checkbox" name="search_playlists_hide_saved" {% if search_playlists_hide_saved %}checked{% endif %}>
           <span class="slider"></span>
